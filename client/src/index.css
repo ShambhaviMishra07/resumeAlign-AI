@@ -1,0 +1,101 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: #f5f0ff;
+  color: #1e1b2e;
+  overflow-x: hidden;
+}
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: drift linear infinite;
+}
+
+.blob-1 {
+  width: 600px;
+  height: 600px;
+  background: #e8d5f5;
+  top: -150px;
+  left: -150px;
+  animation-duration: 20s;
+}
+.blob-2 {
+  width: 500px;
+  height: 500px;
+  background: #ffd6e0;
+  top: 40%;
+  right: -100px;
+  animation-duration: 25s;
+  animation-delay: -8s;
+}
+.blob-3 {
+  width: 450px;
+  height: 450px;
+  background: #c8f0e8;
+  bottom: -100px;
+  left: 30%;
+  animation-duration: 22s;
+  animation-delay: -4s;
+}
+.blob-4 {
+  width: 350px;
+  height: 350px;
+  background: #ffe8cc;
+  top: 20%;
+  left: 50%;
+  animation-duration: 18s;
+  animation-delay: -12s;
+}
+
+@keyframes drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(60px, -40px) scale(1.05); }
+  50%  { transform: translate(-40px, 60px) scale(0.95); }
+  75%  { transform: translate(40px, 40px) scale(1.03); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.4);
+  border-radius: 3px;
+}

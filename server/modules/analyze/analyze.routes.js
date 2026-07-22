@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const { protect } = require("../../middleware/auth.middleware");
-const { analyzeATS } = require("./analyze.controller");
+const { analyzeATS, matchJob, aiFeedback } = require("./analyze.controller");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,5 +19,8 @@ const upload = multer({
 });
 
 router.post("/ats", protect, upload.single("resume"), analyzeATS);
+router.post("/match", protect, matchJob);
+router.post("/ai-feedback", protect, aiFeedback);
+
 
 module.exports = router;

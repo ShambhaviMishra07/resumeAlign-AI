@@ -18,6 +18,10 @@ app.use("/auth", authRoutes);
 const uploadRoutes = require("./modules/upload/upload.routes");
 app.use("/upload", uploadRoutes);
 
+const analyzeRoutes = require("./modules/analyze/analyze.routes");
+app.use("/analyze", analyzeRoutes);
+
+
 // Health check
 app.get("/", (req, res) => {
   res.json({ message: "ResumeAI API is running" });
