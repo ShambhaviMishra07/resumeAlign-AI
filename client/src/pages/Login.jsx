@@ -1,36 +1,31 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Eye, EyeOff } from "lucide-react";
+import { Zap, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 
 export default function Login() {
-  const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPass, setShowPass] = useState(false);
+  const navigate      = useNavigate();
+  const [params]      = useSearchParams();
+  const [tab, setTab] = useState("login");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError]     = useState("");
+  const [form, setForm]       = useState({ name: "", email: "", password: "" });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
-  };
+  const change = (e) => { setForm({ ...form, [e.target.name]: e.target.value }); setError(""); };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
+  const submit = async () => {
+    setLoading(true); setError("");
     try {
-      const url = isLogin ? "/auth/login" : "/auth/register";
-      const body = isLogin
-        ? { email: form.email, password: form.password }
-        : form;
-
+      const url  = tab === "login" ? "/auth/login" : "/auth/register";
+      const body = tab === "login" ? { email: form.email, password: form.password } : form;
       const { data } = await axios.post(url, body);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("token",    data.token);
+      localStorage.setItem("userId",   data.user.id);
       localStorage.setItem("userName", data.user.name);
-      navigate("/analyzer");
+      const redirect = params.get("redirect");
+      navigate(redirect === "builder" ? "/builder" : "/analyzer");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     } finally {
@@ -38,146 +33,136 @@ export default function Login() {
     }
   };
 
-  const switchTab = (tab) => {
-    setIsLogin(tab === "login");
-    setError("");
-    setForm({ name: "", email: "", password: "" });
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 relative z-10">
+    <div style={{
+      minHeight: "100vh", background: "var(--bg)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 24,
+    }}>
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.5 }}
+        style={{ width: "100%", maxWidth: 420 }}
       >
         {/* Logo */}
         <div
-          className="flex items-center gap-2 justify-center mb-8 cursor-pointer"
           onClick={() => navigate("/")}
+          style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 40, cursor: "pointer" }}
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center">
-            <FileText size={20} className="text-white" />
+          <div style={{
+            width: 32, height: 32, borderRadius: 8, background: "var(--accent)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Zap size={16} color="#fff" />
           </div>
-          <span className="font-sora font-bold text-2xl text-[#1E1B2E]">
+          <span style={{ fontFamily: "Sora", fontWeight: 700, fontSize: 18, color: "var(--text)" }}>
             ResumeAI
           </span>
         </div>
 
-        <div className="glass rounded-3xl p-8 shadow-xl">
+        <div className="card" style={{ padding: 32 }}>
           {/* Tab toggle */}
-          <div className="flex glass-dark rounded-2xl p-1 mb-8">
-            {[
-              { label: "Login", val: "login" },
-              { label: "Register", val: "register" },
-            ].map((tab) => (
-              <button
-                key={tab.val}
-                onClick={() => switchTab(tab.val)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  (tab.val === "login") === isLogin
-                    ? "bg-white shadow text-[#1E1B2E]"
-                    : "text-gray-400"
-                }`}
+          <div style={{
+            display: "flex",
+            borderBottom: "1px solid var(--border)",
+            marginBottom: 28,
+            position: "relative",
+          }}>
+            {["login", "register"].map((t) => (
+              <button key={t} onClick={() => { setTab(t); setError(""); setForm({ name: "", email: "", password: "" }); }}
+                style={{
+                  flex: 1, padding: "0 0 14px",
+                  background: "none", border: "none", cursor: "pointer",
+                  fontSize: 14, fontWeight: 600,
+                  fontFamily: "Inter",
+                  color: tab === t ? "var(--text)" : "var(--muted)",
+                  transition: "color 0.2s",
+                  textTransform: "capitalize",
+                }}
               >
-                {tab.label}
+                {t}
               </button>
             ))}
+            <motion.div
+              className="tab-indicator"
+              animate={{ left: tab === "login" ? 0 : "50%", width: "50%" }}
+            />
           </div>
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={isLogin ? "login" : "register"}
-              initial={{ opacity: 0, x: 20 }}
+              key={tab}
+              initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.2 }}
             >
-              <h2 className="font-sora font-bold text-2xl text-[#1E1B2E] mb-1">
-                {isLogin ? "Welcome back" : "Create account"}
+              <h2 style={{
+                fontFamily: "Sora", fontWeight: 700, fontSize: 22,
+                color: "var(--text)", marginBottom: 6,
+              }}>
+                {tab === "login" ? "Sign in" : "Create account"}
               </h2>
-              <p className="text-gray-400 text-sm mb-6">
-                {isLogin
-                  ? "Sign in to access your resume analyzer"
-                  : "Start analyzing your resume for free"}
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 24 }}>
+                {tab === "login"
+                  ? "Access your resume builder and saved analyses."
+                  : "Free account. No credit card."}
               </p>
 
-              {/* Error */}
               {error && (
-                <div className="bg-red-50 border border-red-100 text-red-500 text-sm px-4 py-3 rounded-xl mb-5">
+                <div style={{
+                  background: "#EF444415", border: "1px solid #EF444430",
+                  borderRadius: 8, padding: "10px 14px",
+                  fontSize: 13, color: "#F87171", marginBottom: 16,
+                }}>
                   {error}
                 </div>
               )}
 
-              {/* Form fields */}
-              <div className="space-y-4">
-                {!isLogin && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {tab === "register" && (
                   <div>
-                    <label className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">
-                      Full Name
-                    </label>
-                    <input
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      placeholder="John Doe"
-                      className="w-full glass-dark rounded-xl px-4 py-3 text-sm text-[#1E1B2E] placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-300 transition"
-                    />
+                    <label className="mono" style={{ display: "block", marginBottom: 6 }}>Full Name</label>
+                    <input className="input" name="name" value={form.name}
+                      onChange={change} placeholder="John Doe" />
                   </div>
                 )}
-
                 <div>
-                  <label className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">
-                    Email
-                  </label>
-                  <input
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="john@example.com"
-                    className="w-full glass-dark rounded-xl px-4 py-3 text-sm text-[#1E1B2E] placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-300 transition"
-                  />
+                  <label className="mono" style={{ display: "block", marginBottom: 6 }}>Email</label>
+                  <input className="input" name="email" type="email" value={form.email}
+                    onChange={change} placeholder="john@example.com" />
                 </div>
-
                 <div>
-                  <label className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      name="password"
-                      type={showPass ? "text" : "password"}
-                      value={form.password}
-                      onChange={handleChange}
+                  <label className="mono" style={{ display: "block", marginBottom: 6 }}>Password</label>
+                  <div style={{ position: "relative" }}>
+                    <input className="input" name="password"
+                      type={showPw ? "text" : "password"}
+                      value={form.password} onChange={change}
                       placeholder="Min 6 characters"
-                      onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                      className="w-full glass-dark rounded-xl px-4 py-3 text-sm text-[#1E1B2E] placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-300 transition pr-11"
+                      onKeyDown={(e) => e.key === "Enter" && submit()}
+                      style={{ paddingRight: 40 }}
                     />
-                    <button
-                      onClick={() => setShowPass(!showPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    <button onClick={() => setShowPw(!showPw)} style={{
+                      position: "absolute", right: 12, top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--muted)",
+                    }}>
+                      {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSubmit}
+              <button
+                className="btn-primary"
+                onClick={submit}
                 disabled={loading}
-                className="w-full mt-6 py-3.5 bg-gradient-to-r from-purple-500 to-pink-400 text-white rounded-2xl font-semibold shadow-lg shadow-purple-200 disabled:opacity-60 transition"
+                style={{ width: "100%", marginTop: 24, padding: "12px", fontSize: 15 }}
               >
-                {loading
-                  ? "Please wait..."
-                  : isLogin
-                  ? "Sign In"
-                  : "Create Account"}
-              </motion.button>
+                {loading ? "Please wait…" : tab === "login" ? "Sign in" : "Create account"}
+              </button>
             </motion.div>
           </AnimatePresence>
         </div>

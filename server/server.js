@@ -21,6 +21,9 @@ app.use("/upload", uploadRoutes);
 const analyzeRoutes = require("./modules/analyze/analyze.routes");
 app.use("/analyze", analyzeRoutes);
 
+const resumeRoutes = require("./modules/resume/resume.routes");
+app.use("/resume", resumeRoutes);
+
 
 // Health check
 app.get("/", (req, res) => {

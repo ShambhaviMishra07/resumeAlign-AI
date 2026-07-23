@@ -1,225 +1,270 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, Zap, Target, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight, FileText, Zap, Target, Sparkles } from "lucide-react";
 import Navbar from "../components/Navbar";
 
-const features = [
+const TICKER_ITEMS = [
+  "ATS Score  68 → 91",  "·",
+  "Keywords matched  11/14", "·",
+  "Missing skill: Docker", "·",
+  "Action verbs added  +6", "·",
+  "Job match  74%", "·",
+  "Bullet rewritten  ×3", "·",
+  "Score improved  +23 pts", "·",
+  "ATS Score  68 → 91",  "·",
+  "Keywords matched  11/14", "·",
+  "Missing skill: Docker", "·",
+  "Action verbs added  +6", "·",
+  "Job match  74%", "·",
+  "Bullet rewritten  ×3", "·",
+  "Score improved  +23 pts", "·",
+];
+
+const FEATURES = [
   {
     icon: FileText,
-    title: "Smart Parsing",
-    desc: "Supports PDF and DOCX. Extracts every section with precision.",
-    color: "#A78BFA",
-    bg: "#A78BFA20",
+    label: "Parse",
+    title: "Reads every word",
+    desc: "Extracts text from PDF and DOCX with section-level precision — education, experience, skills, projects.",
   },
   {
     icon: Zap,
-    title: "ATS Scoring",
-    desc: "Rule-based engine checks formatting, keywords, and structure instantly.",
-    color: "#F9A8D4",
-    bg: "#F9A8D420",
+    label: "Score",
+    title: "ATS score in seconds",
+    desc: "Rule-based engine checks keyword density, section presence, action verbs, contact info. Score out of 100.",
   },
   {
     icon: Target,
-    title: "Job Matching",
-    desc: "Paste any job description and see exactly what skills are missing.",
-    color: "#6EE7B7",
-    bg: "#6EE7B720",
+    label: "Match",
+    title: "Job description fit",
+    desc: "Paste any JD. Weighted keyword matching ranks missing skills by High / Medium / Low priority.",
   },
   {
     icon: Sparkles,
-    title: "AI Feedback",
-    desc: "ChatGPT rewrites weak points and suggests stronger action verbs.",
-    color: "#FCD34D",
-    bg: "#FCD34D20",
+    label: "Improve",
+    title: "AI rewrites your bullets",
+    desc: "Groq AI identifies weak lines and rewrites them with stronger verbs, specific impact, and ATS phrasing.",
   },
 ];
 
-const steps = [
-  { num: "01", title: "Upload Resume", desc: "Drop your PDF or DOCX file" },
-  { num: "02", title: "Get ATS Score", desc: "See your score and what's hurting it" },
-  { num: "03", title: "Match to Job", desc: "Paste a JD and find skill gaps" },
-  { num: "04", title: "AI Feedback", desc: "Get ChatGPT-powered improvements" },
-];
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
 
 export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen z-10">
+    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <Navbar />
 
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-36 pb-24 text-center">
+      {/* ── Hero ── */}
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "140px 24px 80px" }}>
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.6 }}
+          style={{ maxWidth: 700 }}
         >
-          <span className="inline-block glass px-4 py-1.5 rounded-full text-sm font-medium text-purple-700 mb-6">
-            ✦ AI-Powered Resume Analysis
-          </span>
+          <div className="badge badge-violet" style={{ marginBottom: 20 }}>
+            <Zap size={11} /> AI-Powered · ATS-Ready
+          </div>
 
-          <h1 className="font-sora font-extrabold text-5xl md:text-6xl leading-tight text-[#1E1B2E] mb-6">
-            Your resume deserves
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-400 to-purple-400">
-              to get noticed.
+          <h1 style={{
+            fontFamily: "Sora",
+            fontWeight: 800,
+            fontSize: "clamp(40px, 6vw, 72px)",
+            lineHeight: 1.08,
+            letterSpacing: "-0.03em",
+            color: "var(--text)",
+            marginBottom: 24,
+          }}>
+            Your resume,<br />
+            <span className="sweep-underline" style={{ color: "#A78BFA" }}>
+              actually optimized.
             </span>
           </h1>
 
-          <p className="text-gray-500 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-            Upload your resume, get an ATS score, match it to any job
-            description, and receive AI-powered feedback — all in seconds.
+          <p style={{
+            fontSize: 18, color: "var(--muted)", lineHeight: 1.7,
+            maxWidth: 520, marginBottom: 36,
+          }}>
+            Upload your resume. Get an ATS score, job-match analysis,
+            and AI-rewritten bullet points — in under 60 seconds.
           </p>
 
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/login")}
-            className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-400 text-white rounded-2xl font-semibold text-lg shadow-lg shadow-purple-200 inline-flex items-center gap-2"
-          >
-            Analyze My Resume <ArrowRight size={20} />
-          </motion.button>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <motion.button
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              className="btn-primary"
+              style={{ padding: "12px 24px", fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}
+              onClick={() => navigate("/analyzer")}
+            >
+              Analyze my resume <ArrowRight size={16} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              className="btn-ghost"
+              style={{ padding: "12px 24px", fontSize: 15 }}
+              onClick={() => navigate("/builder")}
+            >
+              Build from scratch
+            </motion.button>
+          </div>
         </motion.div>
 
-        {/* Mock preview card */}
+        {/* Stats row */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.3 }}
-          className="mt-16 glass rounded-3xl p-6 max-w-2xl mx-auto shadow-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          style={{
+            display: "flex", gap: 40, marginTop: 60,
+            paddingTop: 40, borderTop: "1px solid var(--border)",
+          }}
         >
-          {/* Fake browser bar */}
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-3 h-3 rounded-full bg-red-300" />
-            <div className="w-3 h-3 rounded-full bg-yellow-300" />
-            <div className="w-3 h-3 rounded-full bg-green-300" />
-            <span className="ml-3 text-xs text-gray-400">resumeai.app/analyzer</span>
-          </div>
-
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="glass-dark rounded-2xl p-4 text-center">
-              <div className="text-3xl font-sora font-bold text-purple-600">87</div>
-              <div className="text-xs text-gray-500 mt-1">ATS Score</div>
-            </div>
-            <div className="glass-dark rounded-2xl p-4 text-center">
-              <div className="text-3xl font-sora font-bold text-pink-500">12</div>
-              <div className="text-xs text-gray-500 mt-1">Keywords Found</div>
-            </div>
-            <div className="glass-dark rounded-2xl p-4 text-center">
-              <div className="text-3xl font-sora font-bold text-emerald-500">78%</div>
-              <div className="text-xs text-gray-500 mt-1">Job Match</div>
-            </div>
-          </div>
-
-          {/* AI suggestion preview */}
-          <div className="glass-dark rounded-2xl p-4 text-left">
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Sparkles size={13} className="text-purple-600" />
+          {[
+            { val: "100",  unit: "pt",   label: "ATS score ceiling" },
+            { val: "60",   unit: "sec",  label: "Average analysis time" },
+            { val: "3×",   unit: "",     label: "More callbacks reported" },
+          ].map((s, i) => (
+            <div key={i}>
+              <div style={{ fontFamily: "Sora", fontWeight: 800, fontSize: 36, color: "var(--text)", letterSpacing: "-0.03em" }}>
+                {s.val}<span style={{ fontSize: 18, color: "var(--accent)" }}>{s.unit}</span>
               </div>
-              <div>
-                <p className="text-xs font-semibold text-purple-600 mb-1">
-                  AI Suggestion
-                </p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Replace{" "}
-                  <span className="line-through text-red-400">
-                    "responsible for managing"
-                  </span>{" "}
-                  with{" "}
-                  <span className="text-emerald-600 font-medium">
-                    "spearheaded"
-                  </span>{" "}
-                  to strengthen impact and pass ATS filters.
-                </p>
-              </div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{s.label}</div>
             </div>
-          </div>
+          ))}
         </motion.div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-6 pb-24">
+      {/* ── Ticker ── */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="ticker-wrap"
+      >
+        <span className="ticker-inner">
+          {TICKER_ITEMS.map((item, i) => (
+            <span key={i} style={{
+              marginRight: 40,
+              color: item === "·" ? "var(--border-2)" : "var(--muted)",
+            }}>
+              {item}
+            </span>
+          ))}
+        </span>
+      </motion.div>
+
+      {/* ── Features ── */}
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px" }}>
         <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          transition={{ duration: 0.5 }}
+          style={{ marginBottom: 56 }}
         >
-          <h2 className="font-sora text-3xl font-bold text-[#1E1B2E] mb-3">
-            Everything you need to land the job
+          <span className="mono">What it does</span>
+          <h2 style={{
+            fontFamily: "Sora", fontWeight: 700,
+            fontSize: "clamp(28px, 4vw, 40px)",
+            letterSpacing: "-0.025em",
+            color: "var(--text)", marginTop: 12,
+          }}>
+            Four tools. One workflow.
           </h2>
-          <p className="text-gray-500">
-            Four powerful tools in one clean interface.
-          </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((f, i) => (
+        <motion.div
+          variants={stagger} initial="hidden" whileInView="show"
+          viewport={{ once: true }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 2,
+            border: "1px solid var(--border)",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          {FEATURES.map((f, i) => (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="glass rounded-3xl p-6 hover:shadow-lg transition-shadow"
+              key={i} variants={fadeUp}
+              style={{
+                background: "var(--surface)",
+                padding: "32px 28px",
+                borderRight: i < FEATURES.length - 1 ? "1px solid var(--border)" : "none",
+              }}
             >
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-                style={{ background: f.bg }}
-              >
-                <f.icon size={22} style={{ color: f.color }} />
+              <div style={{
+                width: 36, height: 36, borderRadius: 8,
+                background: "var(--border)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 20,
+              }}>
+                <f.icon size={17} color="#A78BFA" />
               </div>
-              <h3 className="font-sora font-semibold text-[#1E1B2E] text-lg mb-2">
+              <span className="mono" style={{ color: "#7C3AED" }}>{f.label}</span>
+              <h3 style={{
+                fontFamily: "Sora", fontWeight: 600, fontSize: 17,
+                color: "var(--text)", margin: "8px 0 10px",
+              }}>
                 {f.title}
               </h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.65 }}>{f.desc}</p>
             </motion.div>
           ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="max-w-5xl mx-auto px-6 pb-32">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="font-sora text-3xl font-bold text-[#1E1B2E] mb-3">
-            How it works
-          </h2>
-          <p className="text-gray-500">
-            From upload to optimized resume in under a minute.
-          </p>
         </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {steps.map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="glass rounded-3xl p-6 text-center"
-            >
-              <div className="font-sora text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-purple-400 to-pink-400 mb-3">
-                {s.num}
-              </div>
-              <h3 className="font-semibold text-[#1E1B2E] mb-1">{s.title}</h3>
-              <p className="text-gray-500 text-sm">{s.desc}</p>
-            </motion.div>
-          ))}
-        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/30 py-8 text-center text-gray-400 text-sm">
-        Built with Node.js · Express · MongoDB · OpenAI
+      {/* ── CTA ── */}
+      <section style={{
+        borderTop: "1px solid var(--border)",
+        padding: "80px 24px",
+        textAlign: "center",
+      }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 style={{
+            fontFamily: "Sora", fontWeight: 700,
+            fontSize: "clamp(26px, 4vw, 40px)",
+            letterSpacing: "-0.025em",
+            color: "var(--text)", marginBottom: 16,
+          }}>
+            Ready to get past the filter?
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 32 }}>
+            No account needed to analyze. Just upload and go.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+            className="btn-primary"
+            style={{ padding: "13px 28px", fontSize: 15, display: "inline-flex", alignItems: "center", gap: 8 }}
+            onClick={() => navigate("/analyzer")}
+          >
+            Get my ATS score <ArrowRight size={16} />
+          </motion.button>
+        </motion.div>
+      </section>
+
+      <footer style={{
+        borderTop: "1px solid var(--border)",
+        padding: "24px",
+        textAlign: "center",
+        fontSize: 13,
+        color: "var(--muted)",
+        fontFamily: "JetBrains Mono",
+      }}>
+        ResumeAI · Node.js · Express · MongoDB · Groq AI
       </footer>
     </div>
   );

@@ -2,103 +2,84 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Upload, FileText, Sparkles, Target, CheckCircle,
-  XCircle, AlertCircle, ChevronDown, ChevronUp, Loader,
+  Upload, FileText, Sparkles, Target,
+  CheckCircle, XCircle, AlertCircle,
+  ChevronDown, ChevronUp, Loader, Zap,
 } from "lucide-react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
-import { Zap } from "lucide-react";
 
-const token = () => localStorage.getItem("token");
-const authHeader = () => ({ Authorization: `Bearer ${token()}` });
+const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
-// --- Score Ring Component ---
+/* ── Score Ring ── */
 function ScoreRing({ score }) {
-  const size = 140;
-  const stroke = 10;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color =
-    score >= 75 ? "#6EE7B7" : score >= 50 ? "#FCD34D" : "#F9A8D4";
-  const label =
-    score >= 75 ? "Great" : score >= 50 ? "Average" : "Needs Work";
+  const R = 54, SW = 8;
+  const circ  = 2 * Math.PI * R;
+  const offset = circ - (score / 100) * circ;
+  const color  = score >= 75 ? "#10B981" : score >= 50 ? "#F59E0B" : "#EF4444";
+  const label  = score >= 75 ? "Strong" : score >= 50 ? "Average" : "Weak";
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <svg width={size} height={size}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <svg width={120} height={120} style={{ overflow: "visible" }}>
+        <circle cx={60} cy={60} r={R} fill="none" stroke="var(--border)" strokeWidth={SW} />
         <circle
-          cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={stroke}
-        />
-        <circle
-          cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke={color} strokeWidth={stroke}
+          cx={60} cy={60} r={R}
+          fill="none" stroke={color} strokeWidth={SW}
           strokeLinecap="round"
-          strokeDasharray={circumference}
+          strokeDasharray={circ}
           strokeDashoffset={offset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: "stroke-dashoffset 1.5s ease-out" }}
+          transform="rotate(-90 60 60)"
+          className="score-ring"
         />
-        <text
-          x={size / 2} y={size / 2 - 6}
-          textAnchor="middle" fontSize="28"
-          fontWeight="700" fill="#1E1B2E"
-          fontFamily="Sora, sans-serif"
-        >
+        <text x={60} y={55} textAnchor="middle"
+          style={{ fontFamily: "Sora", fontWeight: 800, fontSize: 28, fill: "var(--text)" }}>
           {score}
         </text>
-        <text
-          x={size / 2} y={size / 2 + 18}
-          textAnchor="middle" fontSize="11"
-          fill="#9CA3AF" fontFamily="Inter, sans-serif"
-        >
-          ATS Score
+        <text x={60} y={73} textAnchor="middle"
+          style={{ fontFamily: "JetBrains Mono", fontSize: 10, fill: "var(--muted)", letterSpacing: "0.05em" }}>
+          ATS SCORE
         </text>
       </svg>
-      <span
-        className="text-xs font-semibold px-3 py-1 rounded-full"
-        style={{
-          background: color + "30",
-          color:
-            color === "#6EE7B7"
-              ? "#059669"
-              : color === "#FCD34D"
-              ? "#B45309"
-              : "#DB2777",
-        }}
-      >
+      <span className="badge" style={{
+        background: color + "20", color, border: `1px solid ${color}30`, fontSize: 11,
+      }}>
         {label}
       </span>
     </div>
   );
 }
 
-// --- Collapsible Section ---
-function Section({ title, icon: Icon, iconColor, children, defaultOpen = false }) {
+/* ── Collapsible panel ── */
+function Panel({ title, icon: Icon, iconColor = "#A78BFA", defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
-
   return (
-    <div className="glass rounded-3xl overflow-hidden">
+    <div className="card" style={{ overflow: "hidden" }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full p-6 flex items-center justify-between text-left"
+        style={{
+          width: "100%", padding: "18px 22px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "none", border: "none", cursor: "pointer",
+        }}
       >
-        <div className="flex items-center gap-3">
-          <Icon size={18} style={{ color: iconColor }} />
-          <h3 className="font-sora font-semibold text-[#1E1B2E]">{title}</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Icon size={16} color={iconColor} />
+          <span style={{ fontFamily: "Sora", fontWeight: 600, fontSize: 15, color: "var(--text)" }}>
+            {title}
+          </span>
         </div>
-        {open ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+        {open
+          ? <ChevronUp size={16} color="var(--muted)" />
+          : <ChevronDown size={16} color="var(--muted)" />}
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "auto" }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
+            initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+            style={{ overflow: "hidden" }}
           >
-            <div className="px-6 pb-6">{children}</div>
+            <div style={{ padding: "0 22px 22px" }}>{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -106,25 +87,45 @@ function Section({ title, icon: Icon, iconColor, children, defaultOpen = false }
   );
 }
 
-// --- Main Analyzer Page ---
-export default function Analyzer() {
-  const [file, setFile] = useState(null);
-  const [step, setStep] = useState("upload");
-  const [loading, setLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState("");
-  const [error, setError] = useState("");
+/* ── Progress bar ── */
+function Bar({ label, val, max }) {
+  const pct = Math.round((val / max) * 100);
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>{label}</span>
+        <span style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "var(--muted)" }}>
+          {val} / {max}
+        </span>
+      </div>
+      <div className="progress-track">
+        <motion.div
+          className="progress-fill"
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1.1, ease: [0.4, 0, 0.2, 1] }}
+        />
+      </div>
+    </div>
+  );
+}
 
-  // Results state
+/* ── Main page ── */
+export default function Analyzer() {
+  const [file, setFile]             = useState(null);
+  const [step, setStep]             = useState("upload");
+  const [loading, setLoading]       = useState(false);
+  const [loadMsg, setLoadMsg]       = useState("");
+  const [error, setError]           = useState("");
   const [resumeText, setResumeText] = useState("");
-  const [atsResult, setAtsResult] = useState(null);
+  const [atsResult, setAtsResult]   = useState(null);
   const [matchResult, setMatchResult] = useState(null);
   const [aiFeedback, setAiFeedback] = useState(null);
-  const [jobDesc, setJobDesc] = useState("");
-  const [jobMatched, setJobMatched] = useState(false);
-  const [aiLoaded, setAiLoaded] = useState(false);
+  const [jobDesc, setJobDesc]       = useState("");
+  const [aiLoaded, setAiLoaded]     = useState(false);
 
-  const onDrop = useCallback((accepted) => {
-    if (accepted[0]) { setFile(accepted[0]); setError(""); }
+  const onDrop = useCallback((files) => {
+    if (files[0]) { setFile(files[0]); setError(""); }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -136,34 +137,28 @@ export default function Analyzer() {
     maxFiles: 1,
   });
 
-  // Step 1 — Analyze ATS
   const analyze = async () => {
-    if (!file) return setError("Please upload a resume first");
-    setLoading(true);
-    setError("");
-    setLoadingMsg("Parsing your resume...");
-    const formData = new FormData();
-    formData.append("resume", file);
+    if (!file) return setError("Upload a resume first");
+    setLoading(true); setError("");
+    setLoadMsg("Parsing resume…");
+    const fd = new FormData();
+    fd.append("resume", file);
     try {
-      setLoadingMsg("Calculating ATS score...");
-      const { data } = await axios.post("/analyze/ats", formData, {
+      setLoadMsg("Calculating ATS score…");
+      const { data } = await axios.post("/analyze/ats", fd, {
         headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
       });
       setResumeText(data.resumeText);
       setAtsResult(data.atsResult);
       setStep("results");
     } catch (err) {
-      setError(err.response?.data?.message || "Analysis failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.message || "Analysis failed");
+    } finally { setLoading(false); }
   };
 
-  // Step 2 — Match JD
   const matchJob = async () => {
     if (!jobDesc.trim()) return;
-    setLoading(true);
-    setLoadingMsg("Matching against job description...");
+    setLoading(true); setLoadMsg("Matching keywords…");
     try {
       const { data } = await axios.post(
         "/analyze/match",
@@ -171,19 +166,13 @@ export default function Analyzer() {
         { headers: { ...authHeader(), "Content-Type": "application/json" } }
       );
       setMatchResult(data);
-      setJobMatched(true);
-    } catch (err) {
-      setError("Job matching failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Job match failed"); }
+    finally { setLoading(false); }
   };
 
-  // Step 3 — AI Feedback
-  const getAiFeedback = async () => {
+  const getAI = async () => {
     if (aiLoaded) return;
-    setLoading(true);
-    setLoadingMsg("ChatGPT is analyzing your resume...");
+    setLoading(true); setLoadMsg("Groq AI is reading your resume…");
     try {
       const { data } = await axios.post(
         "/analyze/ai-feedback",
@@ -192,77 +181,75 @@ export default function Analyzer() {
       );
       setAiFeedback(data.feedback);
       setAiLoaded(true);
-    } catch (err) {
-      setError("AI feedback failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("AI feedback failed"); }
+    finally { setLoading(false); }
   };
 
   const reset = () => {
-    setFile(null); setStep("upload"); setResumeText("");
-    setAtsResult(null); setMatchResult(null); setAiFeedback(null);
-    setJobDesc(""); setJobMatched(false); setAiLoaded(false); setError("");
+    setFile(null); setStep("upload"); setResumeText(""); setAtsResult(null);
+    setMatchResult(null); setAiFeedback(null); setJobDesc(""); setAiLoaded(false); setError("");
   };
 
   return (
-    <div className="relative min-h-screen z-10">
+    <div style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 pt-28 pb-20">
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "100px 24px 60px" }}>
         <AnimatePresence mode="wait">
 
-          {/* ---- UPLOAD STEP ---- */}
+          {/* ── UPLOAD ── */}
           {step === "upload" && (
-            <motion.div
-              key="upload"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <div className="text-center mb-10">
-                <h1 className="font-sora font-bold text-4xl text-[#1E1B2E] mb-3">
-                  Analyze Your Resume
+            <motion.div key="upload"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ marginBottom: 40 }}>
+                <span className="mono">Resume Analyzer</span>
+                <h1 style={{
+                  fontFamily: "Sora", fontWeight: 700,
+                  fontSize: "clamp(28px, 5vw, 44px)",
+                  letterSpacing: "-0.025em", color: "var(--text)", marginTop: 10,
+                }}>
+                  Upload your resume
                 </h1>
-                <p className="text-gray-500">
-                  Upload your resume to get your ATS score, AI feedback, and
-                  job match — all in one place.
+                <p style={{ color: "var(--muted)", fontSize: 15, marginTop: 8 }}>
+                  No sign-in required. PDF or DOCX, up to 5 MB.
                 </p>
               </div>
 
               {/* Dropzone */}
               <div
                 {...getRootProps()}
-                className={`glass rounded-3xl p-16 text-center cursor-pointer transition-all border-2 border-dashed ${
-                  isDragActive
-                    ? "border-purple-400 bg-purple-50/20"
-                    : "border-white/50 hover:border-purple-300"
-                }`}
+                className="card"
+                style={{
+                  padding: "64px 32px", textAlign: "center", cursor: "pointer",
+                  borderStyle: "dashed",
+                  borderColor: isDragActive ? "var(--accent)" : "var(--border)",
+                  background: isDragActive ? "#7C3AED08" : "var(--surface)",
+                  transition: "border-color 0.2s, background 0.2s",
+                }}
               >
                 <input {...getInputProps()} />
-                <motion.div
-                  animate={isDragActive ? { scale: 1.05 } : { scale: 1 }}
-                  className="flex flex-col items-center gap-4"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                    <Upload size={28} className="text-purple-500" />
+                <motion.div animate={isDragActive ? { scale: 1.04 } : { scale: 1 }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 12,
+                    background: "var(--border)", margin: "0 auto 16px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Upload size={22} color="#A78BFA" />
                   </div>
                   {file ? (
-                    <div className="flex items-center gap-3 glass-dark px-5 py-3 rounded-2xl">
-                      <FileText size={20} className="text-purple-500" />
-                      <span className="font-medium text-[#1E1B2E]">{file.name}</span>
-                      <span className="text-xs text-gray-400">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <FileText size={18} color="#A78BFA" />
+                      <span style={{ fontWeight: 600, color: "var(--text)", fontSize: 15 }}>{file.name}</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)" }}>
                         {(file.size / 1024).toFixed(0)} KB
                       </span>
                     </div>
                   ) : (
                     <>
-                      <p className="font-semibold text-[#1E1B2E]">
-                        {isDragActive
-                          ? "Drop it here!"
-                          : "Drag & drop your resume"}
+                      <p style={{ fontWeight: 600, color: "var(--text)", fontSize: 15, marginBottom: 6 }}>
+                        {isDragActive ? "Drop here" : "Drag & drop your resume"}
                       </p>
-                      <p className="text-gray-400 text-sm">
-                        or click to browse · PDF and DOCX supported · Max 5MB
+                      <p style={{ fontSize: 13, color: "var(--muted)" }}>
+                        or click to browse · PDF and DOCX supported
                       </p>
                     </>
                   )}
@@ -270,342 +257,277 @@ export default function Analyzer() {
               </div>
 
               {error && (
-                <div className="mt-4 flex items-center gap-2 text-red-500 text-sm glass rounded-xl px-4 py-3">
-                  <AlertCircle size={16} /> {error}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  background: "#EF444412", border: "1px solid #EF444428",
+                  borderRadius: 10, padding: "10px 14px",
+                  fontSize: 13, color: "#F87171", marginTop: 12,
+                }}>
+                  <AlertCircle size={14} /> {error}
                 </div>
               )}
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
+                className="btn-primary"
                 onClick={analyze}
                 disabled={loading || !file}
-                className="w-full mt-6 py-4 bg-gradient-to-r from-purple-500 to-pink-400 text-white rounded-2xl font-semibold text-lg shadow-lg shadow-purple-200 disabled:opacity-50 flex items-center justify-center gap-3"
+                style={{
+                  width: "100%", marginTop: 14, padding: "14px",
+                  fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}
               >
-                {loading ? (
-                  <><Loader size={20} className="animate-spin" /> {loadingMsg}</>
-                ) : (
-                  <><Sparkles size={20} /> Analyze Resume</>
-                )}
-              </motion.button>
+                {loading
+                  ? <><Loader size={16} className="animate-spin" /> {loadMsg}</>
+                  : <><Zap size={16} /> Analyze resume</>}
+              </button>
             </motion.div>
           )}
 
-          {/* ---- RESULTS STEP ---- */}
+          {/* ── RESULTS ── */}
           {step === "results" && atsResult && (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-5"
+            <motion.div key="results"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              style={{ display: "flex", flexDirection: "column", gap: 12 }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-2">
+              {/* Header row */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                 <div>
-                  <h1 className="font-sora font-bold text-3xl text-[#1E1B2E]">
-                    Your Results
+                  <span className="mono">Analysis complete</span>
+                  <h1 style={{
+                    fontFamily: "Sora", fontWeight: 700, fontSize: 28,
+                    letterSpacing: "-0.02em", color: "var(--text)", marginTop: 6,
+                  }}>
+                    Your results
                   </h1>
-                  <p className="text-gray-400 text-sm mt-1">{file?.name}</p>
+                  <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>{file?.name}</p>
                 </div>
-                <button
-                  onClick={reset}
-                  className="glass-dark px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-[#1E1B2E] transition"
-                >
-                  ↑ Upload New
+                <button className="btn-ghost" onClick={reset}
+                  style={{ padding: "8px 14px", fontSize: 13 }}>
+                  ← New upload
                 </button>
               </div>
 
-              {/* Score overview */}
-              <div className="glass rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <div className="flex justify-center">
-                  <ScoreRing score={atsResult.score} />
-                </div>
-                <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              {/* Score card */}
+              <motion.div
+                className="card"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                style={{ padding: "28px 24px", display: "grid", gridTemplateColumns: "auto 1fr", gap: 32, alignItems: "center" }}
+              >
+                <ScoreRing score={atsResult.score} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   {[
-                    { label: "Sections Found", value: atsResult.sectionsFound?.length, color: "#A78BFA" },
-                    { label: "Missing Sections", value: atsResult.missingSections?.length, color: "#F9A8D4" },
-                    { label: "Keywords Found", value: atsResult.keywordsFound?.length, color: "#6EE7B7" },
-                    { label: "Action Verbs", value: atsResult.actionVerbsFound?.length, color: "#FCD34D" },
-                  ].map((stat, i) => (
-                    <div key={i} className="glass-dark rounded-2xl p-4">
-                      <div
-                        className="text-2xl font-sora font-bold"
-                        style={{ color: stat.color }}
-                      >
-                        {stat.value ?? 0}
+                    { label: "Sections found",   value: atsResult.sectionsFound?.length ?? 0,    color: "#A78BFA" },
+                    { label: "Sections missing", value: atsResult.missingSections?.length ?? 0,  color: "#EF4444" },
+                    { label: "Keywords matched", value: atsResult.keywordsFound?.length ?? 0,    color: "#10B981" },
+                    { label: "Action verbs",     value: atsResult.actionVerbsFound?.length ?? 0, color: "#F59E0B" },
+                  ].map((s, i) => (
+                    <motion.div
+                      key={i} className="card-2"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + i * 0.06 }}
+                      style={{ padding: "14px 16px" }}
+                    >
+                      <div style={{ fontFamily: "Sora", fontWeight: 700, fontSize: 26, color: s.color }}>
+                        {s.value}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
-                    </div>
+                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.label}</div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* ATS Breakdown */}
-              <Section
-                title="ATS Breakdown"
-                icon={Zap}
-                iconColor="#A78BFA"
-                defaultOpen={true}
-              >
-                {/* Score bars */}
-                <div className="space-y-3 mb-5">
-                  {Object.entries(atsResult.breakdown || {}).map(([key, val]) => {
-                    const max = { sections: 30, keywords: 25, actionVerbs: 20, length: 15, contactInfo: 10 };
-                    const pct = Math.round((val / (max[key] || 1)) * 100);
-                    const labels = {
-                      sections: "Sections", keywords: "Keywords",
-                      actionVerbs: "Action Verbs", length: "Length",
-                      contactInfo: "Contact Info",
-                    };
-                    return (
-                      <div key={key}>
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>{labels[key]}</span>
-                          <span>{val}/{max[key]}</span>
-                        </div>
-                        <div className="h-2 bg-white/30 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                            className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400"
-                          />
-                        </div>
-                      </div>
-                    );
+              {/* ATS breakdown */}
+              <Panel title="ATS Breakdown" icon={Zap} defaultOpen>
+                <div style={{ marginBottom: 20 }}>
+                  {atsResult.breakdown && Object.entries(atsResult.breakdown).map(([key, val]) => {
+                    const maxMap = { sections: 30, keywords: 25, actionVerbs: 20, length: 15, contactInfo: 10 };
+                    const labelMap = { sections: "Sections", keywords: "Keywords", actionVerbs: "Action Verbs", length: "Length", contactInfo: "Contact Info" };
+                    return <Bar key={key} label={labelMap[key] || key} val={val} max={maxMap[key] || 10} />;
                   })}
                 </div>
 
-                {/* Sections */}
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                  Sections
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
+                <hr className="divider" style={{ marginBottom: 16 }} />
+
+                <p className="mono" style={{ marginBottom: 10 }}>Sections</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
                   {atsResult.sectionsFound?.map((s) => (
-                    <span key={s} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                      <CheckCircle size={11} /> {s}
+                    <span key={s} className="badge badge-green">
+                      <CheckCircle size={10} /> {s}
                     </span>
                   ))}
                   {atsResult.missingSections?.map((s) => (
-                    <span key={s} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-400 border border-red-100">
-                      <XCircle size={11} /> {s} (missing)
+                    <span key={s} className="badge badge-red">
+                      <XCircle size={10} /> {s}
                     </span>
                   ))}
                 </div>
 
-                {/* Keywords */}
                 {atsResult.keywordsFound?.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Keywords Found
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <p className="mono" style={{ marginBottom: 10 }}>Keywords found</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
                       {atsResult.keywordsFound.map((k) => (
-                        <span key={k} className="text-xs px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 border border-purple-100">
-                          {k}
-                        </span>
+                        <span key={k} className="badge badge-violet">{k}</span>
                       ))}
                     </div>
                   </>
                 )}
 
-                {/* Issues */}
                 {atsResult.issues?.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                      Issues to Fix
-                    </p>
-                    <ul className="space-y-2">
+                    <p className="mono" style={{ marginBottom: 10 }}>Issues</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {atsResult.issues.map((issue, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                          <AlertCircle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                        <div key={i} style={{
+                          display: "flex", alignItems: "flex-start", gap: 8,
+                          fontSize: 13, color: "var(--muted)",
+                        }}>
+                          <AlertCircle size={13} color="#F59E0B" style={{ marginTop: 2, flexShrink: 0 }} />
                           {issue}
-                        </li>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </>
                 )}
-              </Section>
+              </Panel>
 
-              {/* Job Match */}
-              <Section title="Job Description Match" icon={Target} iconColor="#6EE7B7">
+              {/* Job match */}
+              <Panel title="Job Description Match" icon={Target} iconColor="#10B981">
                 <textarea
+                  className="input"
                   value={jobDesc}
                   onChange={(e) => setJobDesc(e.target.value)}
-                  placeholder="Paste the full job description here..."
+                  placeholder="Paste the full job description here…"
                   rows={5}
-                  className="w-full glass-dark rounded-2xl px-4 py-3 text-sm text-[#1E1B2E] placeholder-gray-400 outline-none focus:ring-2 focus:ring-purple-300 resize-none mb-4"
+                  style={{ marginBottom: 12 }}
                 />
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
+                  className="btn-primary"
                   onClick={matchJob}
                   disabled={loading || !jobDesc.trim()}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-400 text-white rounded-xl font-semibold text-sm disabled:opacity-50 flex items-center gap-2"
+                  style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", fontSize: 13 }}
                 >
-                  {loading && !jobMatched ? (
-                    <><Loader size={14} className="animate-spin" /> {loadingMsg}</>
-                  ) : (
-                    <><Target size={14} /> Match Resume</>
-                  )}
-                </motion.button>
+                  {loading && !matchResult
+                    ? <><Loader size={13} className="animate-spin" /> {loadMsg}</>
+                    : <><Target size={13} /> Match resume</>}
+                </button>
 
                 {matchResult && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-5 space-y-4"
-                  >
-                    {/* Match score */}
-                    <div className="glass-dark rounded-2xl p-4 flex items-center gap-4">
-                      <div className="text-4xl font-sora font-bold text-purple-600">
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div className="card-2" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+                      <span style={{ fontFamily: "Sora", fontWeight: 800, fontSize: 40, color: "#A78BFA" }}>
                         {matchResult.matchScore}%
-                      </div>
+                      </span>
                       <div>
-                        <div className="font-semibold text-[#1E1B2E]">Match Score</div>
-                        <div className="text-xs text-gray-400">
-                          {matchResult.matchedKeywords?.length} of{" "}
-                          {matchResult.totalJDKeywords} keywords matched
+                        <div style={{ fontWeight: 600, color: "var(--text)", fontSize: 15 }}>Match score</div>
+                        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                          {matchResult.matchedKeywords?.length} of {matchResult.totalJDKeywords} keywords matched
                         </div>
                       </div>
                     </div>
 
-                    {/* Matched */}
                     {matchResult.matchedKeywords?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Matched Keywords
-                        </p>
-                        <div className="flex flex-wrap gap-2">
+                      <>
+                        <p className="mono">Matched</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {matchResult.matchedKeywords.map((k) => (
-                            <span key={k} className="text-xs px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                              ✓ {k}
-                            </span>
+                            <span key={k} className="badge badge-green">✓ {k}</span>
                           ))}
                         </div>
-                      </div>
+                      </>
                     )}
 
-                    {/* Missing */}
                     {matchResult.missingKeywords?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Missing Keywords
-                        </p>
-                        <div className="flex flex-wrap gap-2">
+                      <>
+                        <p className="mono" style={{ marginTop: 4 }}>Missing</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                           {matchResult.missingKeywords.map((k) => (
-                            <span
-                              key={k.keyword}
-                              className={`text-xs px-3 py-1.5 rounded-full border flex items-center gap-1 ${
-                                k.importance === "High"
-                                  ? "bg-red-50 text-red-500 border-red-100"
-                                  : k.importance === "Medium"
-                                  ? "bg-amber-50 text-amber-600 border-amber-100"
-                                  : "bg-gray-50 text-gray-500 border-gray-100"
-                              }`}
-                            >
+                            <span key={k.keyword} className={`badge ${
+                              k.importance === "High" ? "badge-red"
+                              : k.importance === "Medium" ? "badge-amber"
+                              : "badge-gray"
+                            }`}>
                               {k.keyword}
-                              <span className="opacity-60 text-[10px]">
-                                · {k.importance}
-                              </span>
+                              <span style={{ opacity: 0.6, fontSize: 10 }}>· {k.importance}</span>
                             </span>
                           ))}
                         </div>
-                      </div>
+                      </>
                     )}
                   </motion.div>
                 )}
-              </Section>
+              </Panel>
 
               {/* AI Feedback */}
-              <Section
-                title="AI Feedback by ChatGPT"
-                icon={Sparkles}
-                iconColor="#F9A8D4"
-              >
+              <Panel title="AI Feedback — Groq" icon={Sparkles} iconColor="#EC4899">
                 {!aiLoaded && !loading && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={getAiFeedback}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-400 text-white rounded-xl font-semibold text-sm flex items-center gap-2"
+                  <button
+                    className="btn-primary"
+                    onClick={getAI}
+                    style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", fontSize: 13 }}
                   >
-                    <Sparkles size={14} /> Generate AI Feedback
-                  </motion.button>
+                    <Sparkles size={13} /> Generate AI feedback
+                  </button>
                 )}
-
                 {loading && !aiLoaded && (
-                  <div className="flex items-center gap-3 text-gray-500 text-sm">
-                    <Loader size={16} className="animate-spin text-purple-500" />
-                    {loadingMsg}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--muted)", fontSize: 13 }}>
+                    <Loader size={14} color="#A78BFA" className="animate-spin" /> {loadMsg}
                   </div>
                 )}
-
                 {aiFeedback && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    {/* Summary */}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                     {aiFeedback.summary && (
-                      <div className="glass-dark rounded-2xl p-4">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Overall Assessment
-                        </p>
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {aiFeedback.summary}
-                        </p>
+                      <div className="card-2" style={{ padding: "14px 16px" }}>
+                        <p className="mono" style={{ marginBottom: 8 }}>Assessment</p>
+                        <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.65 }}>{aiFeedback.summary}</p>
                       </div>
                     )}
-
-                    {/* Strengths */}
                     {aiFeedback.strengths?.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Strengths
-                        </p>
-                        <ul className="space-y-2">
+                        <p className="mono" style={{ marginBottom: 10 }}>Strengths</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                           {aiFeedback.strengths.map((s, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                              <CheckCircle size={14} className="text-emerald-500 mt-0.5 flex-shrink-0" />
-                              {s}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Suggestions */}
-                    {aiFeedback.suggestions?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Suggestions
-                        </p>
-                        <div className="space-y-2">
-                          {aiFeedback.suggestions.map((s, i) => (
-                            <div key={i} className="flex items-start gap-3 glass-dark rounded-xl p-3">
-                              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-white text-[10px] font-bold">{i + 1}</span>
-                              </div>
-                              <p className="text-sm text-gray-700 leading-relaxed">{s}</p>
+                            <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, color: "var(--muted)" }}>
+                              <CheckCircle size={13} color="#10B981" style={{ marginTop: 2, flexShrink: 0 }} /> {s}
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    {/* Improved bullets */}
+                    {aiFeedback.suggestions?.length > 0 && (
+                      <div>
+                        <p className="mono" style={{ marginBottom: 10 }}>Suggestions</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {aiFeedback.suggestions.map((s, i) => (
+                            <div key={i} className="card-2"
+                              style={{ padding: "12px 14px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                              <div style={{
+                                width: 20, height: 20, borderRadius: 6,
+                                background: "var(--accent)", flexShrink: 0, marginTop: 1,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontFamily: "Sora", fontWeight: 700, fontSize: 10, color: "#fff",
+                              }}>{i + 1}</div>
+                              <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{s}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {aiFeedback.improvedBullets?.length > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                          Improved Bullet Points
-                        </p>
-                        <div className="space-y-3">
+                        <p className="mono" style={{ marginBottom: 10 }}>Rewritten bullets</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {aiFeedback.improvedBullets.map((b, i) => (
-                            <div key={i} className="glass-dark rounded-xl p-4 space-y-2">
-                              <p className="text-xs text-red-400 line-through">{b.original}</p>
-                              <p className="text-xs text-emerald-600 font-medium">{b.improved}</p>
+                            <div key={i} className="card-2" style={{ padding: "14px 16px" }}>
+                              <p style={{ fontSize: 12, color: "#EF4444", textDecoration: "line-through", marginBottom: 6 }}>
+                                {b.original}
+                              </p>
+                              <p style={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}>{b.improved}</p>
                             </div>
                           ))}
                         </div>
@@ -613,11 +535,15 @@ export default function Analyzer() {
                     )}
                   </motion.div>
                 )}
-              </Section>
+              </Panel>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-500 text-sm glass rounded-xl px-4 py-3">
-                  <AlertCircle size={16} /> {error}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  background: "#EF444412", border: "1px solid #EF444428",
+                  borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#F87171",
+                }}>
+                  <AlertCircle size={14} /> {error}
                 </div>
               )}
             </motion.div>
