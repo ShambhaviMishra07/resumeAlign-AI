@@ -6,7 +6,7 @@ const { getResume, createResume, updateResume, downloadPDF } = require("./resume
 router.get("/", protect, getResume);
 router.post("/", protect, createResume);
 router.put("/", protect, updateResume);
-router.post("/download-pdf", downloadPDF);
+router.post("/download-pdf", protect, downloadPDF);
 
 
 module.exports = router;

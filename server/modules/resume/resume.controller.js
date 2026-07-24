@@ -61,160 +61,115 @@ const updateResume = async (req, res) => {
 
 const downloadPDF = async (req, res) => {
   try {
-    const {
-      personalInfo,
-      education,
-      experience,
-      projects,
-      skills,
-      certifications,
-    } = req.body;
+    const { personalInfo, education, projects, skills, hackathons, courses, languages } = req.body;
 
-    const html = `
-<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 13px; color: #111; padding: 44px 48px; line-height: 1.6; }
-  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
-  .contact { font-size: 12px; color: #555; margin-top: 4px; }
-  .links { font-size: 12px; color: #7C3AED; margin-top: 2px; }
-  .summary { font-size: 13px; color: #444; margin-top: 10px; }
-  .divider { border: none; border-top: 2px solid #111; margin: 14px 0; }
-  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #7C3AED; margin-bottom: 10px; }
-  .section { margin-bottom: 18px; }
-  .row { display: flex; justify-content: space-between; }
-  .title { font-weight: 600; font-size: 14px; }
-  .sub { font-size: 12px; color: #555; }
-  .accent { font-size: 12px; color: #7C3AED; margin-bottom: 2px; }
-  .date { font-size: 12px; color: #888; }
-  .desc { font-size: 12px; color: #555; margin-top: 3px; }
-  .skills-line { font-size: 13px; color: #333; }
-  .item { margin-bottom: 10px; }
+  body { font-family: Arial, sans-serif; font-size: 11.5px; color: #111; padding: 36px 44px; line-height: 1.55; }
+  .name { font-size: 21px; font-weight: 700; text-align: center; letter-spacing: 0.02em; }
+  .contact { text-align: center; color: #444; font-size: 10.5px; margin-top: 3px; }
+  .links  { text-align: center; color: #1a56db; font-size: 10.5px; margin-top: 2px; }
+  .section-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1.5px solid #111; padding-bottom: 2px; margin: 10px 0 6px; }
+  .about { font-size: 11px; color: #333; }
+  .proj-title { font-weight: 600; font-size: 11.5px; }
+  .proj-tech { font-weight: 400; color: #444; }
+  .bullet { font-size: 11px; color: #333; padding-left: 10px; margin-top: 2px; }
+  .skill-row { font-size: 11px; margin-bottom: 3px; }
+  .skill-label { font-weight: 600; }
+  .edu-block { margin-bottom: 6px; }
+  .edu-row { display: flex; justify-content: space-between; }
+  .edu-name { font-weight: 600; font-size: 11.5px; }
+  .edu-year { font-size: 10.5px; color: #555; }
+  .edu-sub { font-size: 10.5px; color: #444; }
 </style>
 </head>
 <body>
 
-${personalInfo?.fullName ? `
-<h1>${personalInfo.fullName}</h1>
-<div class="contact">${[personalInfo.email, personalInfo.phone, personalInfo.location].filter(Boolean).join(" · ")}</div>
-${(personalInfo.linkedin || personalInfo.github || personalInfo.portfolio)
-  ? `<div class="links">${[personalInfo.linkedin, personalInfo.github, personalInfo.portfolio].filter(Boolean).join(" · ")}</div>`
-  : ""}
-${personalInfo.summary ? `<div class="summary">${personalInfo.summary}</div>` : ""}
-<hr class="divider" />
-` : ""}
+<div class="name">${personalInfo?.fullName || ""}</div>
+<div class="contact">${[personalInfo?.email, personalInfo?.phone].filter(Boolean).join("  |  ")}</div>
+${(personalInfo?.github || personalInfo?.linkedin || personalInfo?.leetcode) ? `
+<div class="links">${[
+  personalInfo?.github   && `Github: ${personalInfo.github}`,
+  personalInfo?.leetcode && `Leetcode: ${personalInfo.leetcode}`,
+  personalInfo?.linkedin && `LinkedIn: ${personalInfo.linkedin}`,
+].filter(Boolean).join("  |  ")}</div>` : ""}
 
-${education?.some(e => e.school) ? `
-<div class="section">
-  <div class="section-label">Education</div>
-  ${education.filter(e => e.school).map(ed => `
-    <div class="item">
-      <div class="row">
-        <span class="title">${ed.school}</span>
-        <span class="date">${ed.startYear || ""}${ed.endYear ? " – " + ed.endYear : ""}</span>
-      </div>
-      <div class="sub">${[ed.degree, ed.fieldOfStudy].filter(Boolean).join(", ")}</div>
+${personalInfo?.about ? `
+<div class="section-title">About Me</div>
+<div class="about">${personalInfo.about}</div>` : ""}
+
+${projects?.some((p) => p.title) ? `
+<div class="section-title">Projects</div>
+${projects.filter((p) => p.title).map((proj) => `
+  <div style="margin-bottom:8px">
+    <div class="proj-title">${proj.title}${proj.techStack?.length ? ` <span class="proj-tech">| ${Array.isArray(proj.techStack) ? proj.techStack.join(", ") : proj.techStack}</span>` : ""}</div>
+    ${proj.bullets?.filter(Boolean).map((b) => `<div class="bullet">• ${b}</div>`).join("") || ""}
+  </div>`).join("")}` : ""}
+
+${Object.values(skills || {}).some((arr) => arr?.some(Boolean)) ? `
+<div class="section-title">Skills</div>
+${[
+  { label: "Languages",             key: "languages" },
+  { label: "Frameworks & Libraries", key: "frameworks" },
+  { label: "Developer Tools",       key: "developerTools" },
+  { label: "Core Competencies",     key: "coreCompetencies" },
+].filter(({ key }) => skills[key]?.some(Boolean)).map(({ label, key }) =>
+  `<div class="skill-row"><span class="skill-label">${label}: </span>${skills[key].filter(Boolean).join(", ")}</div>`
+).join("")}` : ""}
+
+${education?.some((e) => e.institution) ? `
+<div class="section-title">Education</div>
+${education.filter((e) => e.institution).map((ed) => `
+  <div class="edu-block">
+    <div class="edu-row">
+      <span class="edu-name">${ed.degree || ""}</span>
+      <span class="edu-year">${ed.year || ""}</span>
     </div>
-  `).join("")}
-</div>
-` : ""}
+    <div class="edu-sub">${ed.institution || ""}${ed.location ? `, ${ed.location}` : ""}</div>
+    ${ed.score ? `<div class="edu-sub">• ${ed.score}</div>` : ""}
+  </div>`).join("")}` : ""}
 
-${experience?.some(e => e.company) ? `
-<div class="section">
-  <div class="section-label">Experience</div>
-  ${experience.filter(e => e.company).map(exp => `
-    <div class="item">
-      <div class="row">
-        <span class="title">${exp.role}</span>
-        <span class="date">${exp.startDate || ""}${exp.current ? " – Present" : exp.endDate ? " – " + exp.endDate : ""}</span>
-      </div>
-      <div class="accent">${exp.company}</div>
-      ${exp.description ? `<div class="desc">${exp.description}</div>` : ""}
-    </div>
-  `).join("")}
-</div>
-` : ""}
+${hackathons?.some(Boolean) ? `
+<div class="section-title">Hackathon</div>
+<div style="font-size:11px;color:#333">${hackathons.filter(Boolean).join(", ")}</div>` : ""}
 
-${projects?.some(p => p.title) ? `
-<div class="section">
-  <div class="section-label">Projects</div>
-  ${projects.filter(p => p.title).map(proj => `
-    <div class="item">
-      <div class="row">
-        <span class="title">${proj.title}</span>
-        ${proj.link ? `<span class="date">${proj.link}</span>` : ""}
-      </div>
-      ${proj.techStack?.length ? `<div class="accent">${Array.isArray(proj.techStack) ? proj.techStack.join(", ") : proj.techStack}</div>` : ""}
-      ${proj.description ? `<div class="desc">${proj.description}</div>` : ""}
-    </div>
-  `).join("")}
-</div>
-` : ""}
+${courses?.some(Boolean) ? `
+<div class="section-title">Courses</div>
+${courses.filter(Boolean).map((c) => `<div style="font-size:11px;color:#333">• ${c}</div>`).join("")}` : ""}
 
-${skills?.length ? `
-<div class="section">
-  <div class="section-label">Skills</div>
-  <div class="skills-line">${skills.join(" · ")}</div>
-</div>
-` : ""}
-
-${certifications?.some(c => c.name) ? `
-<div class="section">
-  <div class="section-label">Certifications</div>
-  ${certifications.filter(c => c.name).map(cert => `
-    <div class="item">
-      <div class="row">
-        <span class="title">${cert.name}</span>
-        <span class="date">${[cert.issuer, cert.year].filter(Boolean).join(" · ")}</span>
-      </div>
-    </div>
-  `).join("")}
-</div>
-` : ""}
+${languages?.some(Boolean) ? `
+<div class="section-title">Languages</div>
+<div style="font-size:11px;color:#333">${languages.filter(Boolean).join(", ")}</div>` : ""}
 
 </body>
-</html>
-`;
+</html>`;
 
     const browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
-
     const page = await browser.newPage();
-
-    await page.setContent(html, {
-      waitUntil: "networkidle0",
-    });
-
+    await page.setContent(html, { waitUntil: "networkidle0" });
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: {
-        top: "0px",
-        bottom: "0px",
-        left: "0px",
-        right: "0px",
-      },
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
     });
-
     await browser.close();
 
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${personalInfo?.fullName || "resume"}.pdf`,
+      "Content-Disposition": `attachment; filename="${personalInfo?.fullName || "resume"}.pdf"`,
     });
-
     res.send(pdf);
   } catch (err) {
-    res.status(500).json({
-      message: "PDF generation failed",
-      error: err.message,
-    });
+    res.status(500).json({ message: "PDF generation failed", error: err.message });
   }
 };
 
+// Update module.exports to include downloadPDF
 module.exports = { getResume, createResume, updateResume, downloadPDF };

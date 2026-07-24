@@ -11,6 +11,7 @@ export default defineConfig({
       "/auth": "http://localhost:5000",
       "/analyze": "http://localhost:5000",
       "/resume": "http://localhost:5000",
+      "/agent":   "http://localhost:5000",
     },
   },
 });

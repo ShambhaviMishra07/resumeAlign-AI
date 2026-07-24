@@ -18,9 +18,9 @@ const upload = multer({
   },
 });
 
-router.post("/ats", protect, upload.single("resume"), analyzeATS);
-router.post("/match", protect, matchJob);
-router.post("/ai-feedback", protect, aiFeedback);
+router.post("/ats", upload.single("resume"), analyzeATS);
+router.post("/match", matchJob);
+router.post("/ai-feedback", aiFeedback);
 
 
 module.exports = router;
