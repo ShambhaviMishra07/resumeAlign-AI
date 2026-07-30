@@ -1,4 +1,4 @@
-# ResumeAI
+# ResumeAlign AI
 
 > AI-powered resume analyzer, job matcher, and builder — with a tool-calling AI agent that autonomously optimizes your resume.
 
