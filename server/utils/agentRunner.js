@@ -81,7 +81,7 @@ const executeTool = async (toolName, args) => {
 
   if (toolName === "rewrite_resume_bullets") {
     const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
@@ -99,7 +99,7 @@ const executeTool = async (toolName, args) => {
 
   if (toolName === "suggest_missing_skills") {
     const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
@@ -158,7 +158,7 @@ Job description available: ${jobDescription ? "YES" : "NO"}`,
     iterations++;
 
     const response = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: "openai/gpt-oss-20b",
       messages,
       tools: TOOLS,
       tool_choice: "auto",
