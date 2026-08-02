@@ -2,6 +2,20 @@ const Groq = require("groq-sdk");
 const scoreATS = require("./atsScorer");
 const matchJD  = require("./jdMatcher");
 
+// Compress resume to only essential info — saves ~60% tokens
+const compressResume = (resumeText) => {
+  if (!resumeText) return "";
+
+  // Remove extra whitespace and blank lines
+  const cleaned = resumeText
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
+  // Only send first 1500 chars — enough for the model to understand context
+  return cleaned.slice(0, 1500);
+};
+
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ── Tool definitions (what the agent can call) ──
@@ -81,12 +95,12 @@ const executeTool = async (toolName, args) => {
 
   if (toolName === "rewrite_resume_bullets") {
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
+      model: "llama3-8b-8192",
       messages: [
-        {
-          role: "system",
-          content: "You are an expert resume writer. Rewrite weak bullet points to use strong action verbs and quantifiable impact. Return ONLY a JSON array of objects with 'original' and 'improved' keys. No markdown, no explanation.",
-        },
+       {
+  role: "system",
+  content: `You are a resume optimization agent. You have 4 tools: analyze_ats, match_job_description, rewrite_resume_bullets, suggest_missing_skills. Use them based on user intent. Be concise. Resume available: ${resumeText ? "YES" : "NO"}. JD available: ${jobDescription ? "YES" : "NO"}.`,
+},
         {
           role: "user",
           content: `Resume text:\n${args.resume_text.slice(0, 2500)}\n\nFocus: ${args.focus_area || "all sections"}\n\nFind 3 weak bullets and rewrite them.`,
@@ -99,7 +113,7 @@ const executeTool = async (toolName, args) => {
 
   if (toolName === "suggest_missing_skills") {
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
+      model: "llama3-8b-8192",
       messages: [
         {
           role: "system",
@@ -121,6 +135,8 @@ const executeTool = async (toolName, args) => {
 // ── Main agent runner ──
 // Returns an async generator so we can stream steps to frontend
 const runAgent = async function* (userMessage, resumeText, jobDescription) {
+  const compressedResume = compressResume(resumeText);
+
   const messages = [
     {
       role: "system",
@@ -135,7 +151,14 @@ Job description available: ${jobDescription ? "YES" : "NO"}`,
     },
     {
       role: "user",
-      content: userMessage + (resumeText ? `\n\n[RESUME TEXT ATTACHED - ${resumeText.split(" ").length} words]` : "") + (jobDescription ? `\n\n[JOB DESCRIPTION ATTACHED]` : ""),
+      content:
+  userMessage +
+  (compressedResume
+    ? `\n\n[RESUME TEXT ATTACHED - COMPRESSED]`
+    : "") +
+  (jobDescription
+    ? `\n\n[JOB DESCRIPTION ATTACHED]`
+    : ""),
     },
   ];
 
@@ -147,18 +170,22 @@ Job description available: ${jobDescription ? "YES" : "NO"}`,
     });
     messages.push({
       role: "user",
-      content: `Resume text for analysis:\n${resumeText.slice(0, 3000)}${jobDescription ? `\n\nJob description:\n${jobDescription.slice(0, 1500)}` : ""}`,
+     content: `Resume text for analysis:\n${compressedResume}${
+  jobDescription
+    ? `\n\nJob description:\n${jobDescription.slice(0, 1500)}`
+    : ""
+}`,
     });
   }
 
   let iterations = 0;
-  const MAX_ITERATIONS = 6;
+  const MAX_ITERATIONS = 3;
 
   while (iterations < MAX_ITERATIONS) {
     iterations++;
 
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
+      model: "llama3-8b-8192",
       messages,
       tools: TOOLS,
       tool_choice: "auto",
@@ -182,7 +209,9 @@ Job description available: ${jobDescription ? "YES" : "NO"}`,
       yield { type: "tool_start", tool: toolName, args };
 
       // If resume_text not in args but we have it, inject it
-      if (!args.resume_text && resumeText) args.resume_text = resumeText;
+      if (!args.resume_text && compressedResume) {
+  args.resume_text = compressedResume;
+}
       if (!args.job_description && jobDescription) args.job_description = jobDescription;
 
       const toolResult = await executeTool(toolName, args);
@@ -191,10 +220,10 @@ Job description available: ${jobDescription ? "YES" : "NO"}`,
       yield { type: "tool_result", tool: toolName, result: toolResult };
 
       messages.push({
-        role: "tool",
-        tool_call_id: toolCall.id,
-        content: toolResult,
-      });
+  role: "tool",
+  tool_call_id: toolCall.id,
+  content: toolResult.slice(0, 800), // was unlimited before
+});
     }
   }
 

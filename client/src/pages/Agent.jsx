@@ -50,7 +50,9 @@ export default function Agent() {
   const [error, setError]         = useState("");
   const chatEndRef                = useRef(null);
   const abortRef                  = useRef(null);
+  const [cachedATS, setCachedATS] = useState(null);
 
+  
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
