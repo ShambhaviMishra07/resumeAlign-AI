@@ -99,9 +99,7 @@ const executeTool = async (toolName, args) => {
       messages: [
        {
   role: "system",
-  content: `You are a resume optimization agent.
-  Resume available: ${args.resume_text ? "YES" : "NO"}.
-  JD available: ${args.job_description ? "YES" : "NO"}.`,
+  content: `You are a resume optimization agent. You have 4 tools: analyze_ats, match_job_description, rewrite_resume_bullets, suggest_missing_skills. Use them based on user intent. Be concise. Resume available: ${resumeText ? "YES" : "NO"}. JD available: ${jobDescription ? "YES" : "NO"}.`,
 },
         {
           role: "user",
