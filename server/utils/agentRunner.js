@@ -1,34 +1,30 @@
-const Groq = require("groq-sdk");
+const Groq    = require("groq-sdk");
 const scoreATS = require("./atsScorer");
 const matchJD  = require("./jdMatcher");
 
-// Compress resume to only essential info — saves ~60% tokens
-const compressResume = (resumeText) => {
-  if (!resumeText) return "";
-
-  // Remove extra whitespace and blank lines
-  const cleaned = resumeText
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
-
-  // Only send first 1500 chars — enough for the model to understand context
-  return cleaned.slice(0, 1500);
-};
-
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ── Tool definitions (what the agent can call) ──
+// ── Compress resume to save tokens ──
+const compressResume = (text) => {
+  if (!text) return "";
+  return text
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim()
+    .slice(0, 1500);
+};
+
+// ── Tool definitions ──
 const TOOLS = [
   {
     type: "function",
     function: {
       name: "analyze_ats",
-      description: "Analyzes resume text and returns an ATS score with breakdown, sections found, keywords, and issues.",
+      description: "Analyzes resume text and returns ATS score with breakdown, sections, keywords, and issues. Call this first.",
       parameters: {
         type: "object",
         properties: {
-          resume_text: { type: "string", description: "The full text content of the resume" },
+          resume_text: { type: "string", description: "The resume text to analyze" },
         },
         required: ["resume_text"],
       },
@@ -38,12 +34,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "match_job_description",
-      description: "Compares resume text against a job description and returns a weighted match score with matched and missing keywords.",
+      description: "Compares resume against a job description. Returns weighted match score, matched and missing keywords.",
       parameters: {
         type: "object",
         properties: {
-          resume_text:      { type: "string", description: "The full resume text" },
-          job_description:  { type: "string", description: "The full job description text" },
+          resume_text:     { type: "string" },
+          job_description: { type: "string" },
         },
         required: ["resume_text", "job_description"],
       },
@@ -53,12 +49,13 @@ const TOOLS = [
     type: "function",
     function: {
       name: "rewrite_resume_bullets",
-      description: "Rewrites weak bullet points in the resume to use stronger action verbs and specific impact metrics.",
+      description: "Rewrites weak bullet points with stronger action verbs and quantifiable impact. Returns improved bullets.",
       parameters: {
         type: "object",
         properties: {
-          resume_text: { type: "string", description: "The full resume text" },
-          focus_area:  { type: "string", description: "Optional focus: e.g. 'experience section' or 'projects'" },
+          resume_text: { type: "string" },
+          focus_area:  { type: "string", description: "Which section to focus on, e.g. 'projects' or 'experience'" },
+          feedback:    { type: "string", description: "Optional feedback from previous attempt to guide improvement" },
         },
         required: ["resume_text"],
       },
@@ -68,12 +65,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "suggest_missing_skills",
-      description: "Suggests skills and technologies the candidate should add based on their resume and target role.",
+      description: "Suggests skills to add based on resume and target role.",
       parameters: {
         type: "object",
         properties: {
-          resume_text:  { type: "string", description: "The resume text" },
-          target_role:  { type: "string", description: "The job role the candidate is targeting" },
+          resume_text: { type: "string" },
+          target_role: { type: "string" },
         },
         required: ["resume_text"],
       },
@@ -81,155 +78,296 @@ const TOOLS = [
   },
 ];
 
-// ── Tool execution functions ──
+// ── Execute a tool call ──
 const executeTool = async (toolName, args) => {
   if (toolName === "analyze_ats") {
-    const result = scoreATS(args.resume_text);
+    const result = scoreATS(args.resume_text || "");
     return JSON.stringify(result);
   }
 
   if (toolName === "match_job_description") {
-    const result = matchJD(args.resume_text, args.job_description);
+    const result = matchJD(args.resume_text || "", args.job_description || "");
     return JSON.stringify(result);
   }
 
   if (toolName === "rewrite_resume_bullets") {
+    const feedbackLine = args.feedback
+      ? `\nPrevious attempt feedback: ${args.feedback}. Try a different approach.`
+      : "";
+
     const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
       messages: [
-       {
-  role: "system",
-  content: `You are a resume optimization agent. You have 4 tools: analyze_ats, match_job_description, rewrite_resume_bullets, suggest_missing_skills. Use them based on user intent. Be concise. Resume available: ${resumeText ? "YES" : "NO"}. JD available: ${jobDescription ? "YES" : "NO"}.`,
-},
+        {
+          role: "system",
+          content: "You are an expert resume writer. Rewrite weak bullet points using strong action verbs and quantifiable results. Return ONLY a valid JSON array of objects with 'original' and 'improved' keys. No markdown, no explanation.",
+        },
         {
           role: "user",
-          content: `Resume text:\n${args.resume_text.slice(0, 2500)}\n\nFocus: ${args.focus_area || "all sections"}\n\nFind 3 weak bullets and rewrite them.`,
+          content: `Resume:\n${(args.resume_text || "").slice(0, 1200)}\n\nFocus: ${args.focus_area || "all sections"}${feedbackLine}\n\nFind 3 weak bullets and rewrite them. Return JSON array only.`,
         },
       ],
       temperature: 0.7,
+      max_tokens: 600,
     });
+
     return completion.choices[0].message.content;
   }
 
   if (toolName === "suggest_missing_skills") {
     const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content: "You are a career coach. Suggest missing skills for a candidate. Return ONLY a JSON object with 'skills' (array of strings) and 'reason' (one sentence). No markdown.",
+          content: "You are a career coach. Return ONLY a valid JSON object with 'skills' (string array) and 'reason' (one sentence). No markdown.",
         },
         {
           role: "user",
-          content: `Resume:\n${args.resume_text.slice(0, 2000)}\n\nTarget role: ${args.target_role || "software engineer"}\n\nWhat key skills are missing?`,
+          content: `Resume:\n${(args.resume_text || "").slice(0, 1000)}\n\nTarget role: ${args.target_role || "software engineer"}\n\nWhat key skills are missing? Return JSON only.`,
         },
       ],
       temperature: 0.6,
+      max_tokens: 300,
     });
+
     return completion.choices[0].message.content;
   }
 
   return JSON.stringify({ error: "Unknown tool" });
 };
 
+// ── Self-correction: re-score after rewrite ──
+// Returns { improved: boolean, scoreBefore, scoreAfter, feedback }
+const selfCorrect = async (resumeText, rewriteResult, previousScore) => {
+  // Try to extract improved bullets to test against
+  let improvedText = resumeText;
+  try {
+    const bullets = JSON.parse(rewriteResult);
+    if (Array.isArray(bullets)) {
+      // Replace original bullets with improved ones in the text
+      bullets.forEach(({ original, improved }) => {
+        if (original && improved) {
+          improvedText = improvedText.replace(original, improved);
+        }
+      });
+    }
+  } catch {
+    // If parse fails, score the original with improved text appended
+    improvedText = resumeText + "\n" + rewriteResult;
+  }
+
+  const newScore = scoreATS(improvedText);
+  const improved = newScore.score >= (previousScore + 5);
+
+  return {
+    improved,
+    scoreBefore: previousScore,
+    scoreAfter:  newScore.score,
+    newAtsResult: newScore,
+    feedback: improved
+      ? null
+      : `Score only went from ${previousScore} to ${newScore.score}. The rewrites weren't strong enough. Use more specific metrics, numbers, and industry-standard action verbs.`,
+  };
+};
+
+// ── Format memory turns into message history ──
+const formatMemory = (turns) => {
+  if (!turns || turns.length === 0) return [];
+
+  return turns.slice(-6).map((turn) => ({
+    role: turn.role === "agent" ? "assistant" : "user",
+    content: turn.content.slice(0, 400), // limit each memory message
+  }));
+};
+
 // ── Main agent runner ──
-// Returns an async generator so we can stream steps to frontend
-const runAgent = async function* (userMessage, resumeText, jobDescription) {
-  const compressedResume = compressResume(resumeText);
+// Returns async generator — yields events for SSE streaming
+const runAgent = async function* (
+  userMessage,
+  resumeText,
+  jobDescription,
+  cachedATS,
+  memoryTurns = []
+) {
+  const compressed   = compressResume(resumeText);
+  const pastMessages = formatMemory(memoryTurns);
+
+  // Track what tools got called and ATS scores for self-correction
+  let rewriteResult    = null;
+  let rewriteAttempts  = 0;
+  const MAX_REWRITES   = 2;
+  let currentAtsScore  = cachedATS?.score || null;
+  let toolsUsedThisRun = [];
+
+  // Build system prompt with memory context
+  const memoryContext = memoryTurns.length > 0
+    ? `You have memory of ${memoryTurns.length} previous turns with this user. Use that context — don't repeat analyses already done.`
+    : "This is the start of the session.";
+
+  const cachedContext = cachedATS
+    ? `ATS already scored: ${cachedATS.score}/100. Skip analyze_ats unless user asks for re-analysis.`
+    : "";
 
   const messages = [
     {
       role: "system",
-      content: `You are an expert AI career coach and resume optimization agent. You have access to tools to analyze resumes, match job descriptions, rewrite bullets, and suggest skills.
-
-When the user asks something, figure out which tools to call and in what order. After using the tools, summarize your findings clearly and helpfully.
-
-Always call analyze_ats first if you have resume text. Then decide what else to do based on the user's goal.
-
-Resume text available: ${resumeText ? "YES" : "NO"}
-Job description available: ${jobDescription ? "YES" : "NO"}`,
+      content: `You are a resume optimization agent with memory and self-correction. Tools: analyze_ats, match_job_description, rewrite_resume_bullets, suggest_missing_skills. ${memoryContext} ${cachedContext} Resume available: ${compressed ? "YES" : "NO"}. JD available: ${jobDescription ? "YES" : "NO"}. Be concise and specific.`,
     },
+    // Inject past conversation turns as memory
+    ...pastMessages,
+    // Current user message with context
     {
       role: "user",
-      content:
-  userMessage +
-  (compressedResume
-    ? `\n\n[RESUME TEXT ATTACHED - COMPRESSED]`
-    : "") +
-  (jobDescription
-    ? `\n\n[JOB DESCRIPTION ATTACHED]`
-    : ""),
+      content: `${userMessage}${compressed ? `\n\n[Resume context — ${compressed.split(" ").length} words available]` : ""}${jobDescription ? "\n[Job description attached]" : ""}`,
     },
   ];
 
-  // Inject resume and JD context as assistant context if available
-  if (resumeText) {
+  // Inject resume text as a separate context message if available
+  if (compressed) {
     messages.push({
       role: "assistant",
-      content: `I have the resume text. Let me analyze it now.`,
+      content: "I have your resume. Let me help you.",
     });
     messages.push({
       role: "user",
-     content: `Resume text for analysis:\n${compressedResume}${
-  jobDescription
-    ? `\n\nJob description:\n${jobDescription.slice(0, 1500)}`
-    : ""
-}`,
+      content: `Resume text:\n${compressed}${jobDescription ? `\n\nJob description:\n${jobDescription.slice(0, 800)}` : ""}`,
     });
   }
 
-  let iterations = 0;
-  const MAX_ITERATIONS = 3;
+  let iterations    = 0;
+  const MAX_ITER    = 4;
+  let finalContent  = "";
 
-  while (iterations < MAX_ITERATIONS) {
+  while (iterations < MAX_ITER) {
     iterations++;
 
     const response = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
+      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
       messages,
       tools: TOOLS,
       tool_choice: "auto",
+      max_tokens: 800,
     });
 
     const message = response.choices[0].message;
     messages.push(message);
 
-    // If no tool calls, agent is done
+    // No tool calls — agent is done
     if (!message.tool_calls || message.tool_calls.length === 0) {
-      yield { type: "final", content: message.content };
+      finalContent = message.content || "";
+      yield { type: "final", content: finalContent };
       break;
     }
 
     // Execute each tool call
     for (const toolCall of message.tool_calls) {
       const toolName = toolCall.function.name;
-      const args     = JSON.parse(toolCall.function.arguments);
+      let   args;
 
-      // Yield tool start event so frontend can show progress
-      yield { type: "tool_start", tool: toolName, args };
+      try {
+        args = JSON.parse(toolCall.function.arguments);
+      } catch {
+        args = {};
+      }
 
-      // If resume_text not in args but we have it, inject it
-      if (!args.resume_text && compressedResume) {
-  args.resume_text = compressedResume;
-}
+      // Inject context into args if missing
+      if (!args.resume_text    && compressed)    args.resume_text    = compressed;
       if (!args.job_description && jobDescription) args.job_description = jobDescription;
 
-      const toolResult = await executeTool(toolName, args);
+      // Track tools used
+      toolsUsedThisRun.push(toolName);
 
-      // Yield tool result
+      // Yield tool start so UI shows spinner
+      yield { type: "tool_start", tool: toolName };
+
+      let toolResult = await executeTool(toolName, args);
+
+      // ── Self-correction for rewrite_resume_bullets ──
+      if (toolName === "rewrite_resume_bullets" && currentAtsScore !== null) {
+        rewriteResult = toolResult;
+
+        const correction = await selfCorrect(
+          resumeText || compressed,
+          rewriteResult,
+          currentAtsScore
+        );
+
+        // Yield correction event so UI can show score change
+        yield {
+          type: "self_correction",
+          scoreBefore: correction.scoreBefore,
+          scoreAfter:  correction.scoreAfter,
+          improved:    correction.improved,
+        };
+
+        // If not improved and we haven't hit max retries, try again
+        if (!correction.improved && rewriteAttempts < MAX_REWRITES) {
+          rewriteAttempts++;
+
+          yield {
+            type: "tool_start",
+            tool: "rewrite_resume_bullets",
+            retryAttempt: rewriteAttempts,
+          };
+
+          // Re-run with feedback from correction
+          const retryArgs = {
+            ...args,
+            feedback: correction.feedback,
+          };
+
+          toolResult = await executeTool("rewrite_resume_bullets", retryArgs);
+
+          // Re-score after retry
+          const retryCorrection = await selfCorrect(
+            resumeText || compressed,
+            toolResult,
+            currentAtsScore
+          );
+
+          yield {
+            type: "self_correction",
+            scoreBefore: retryCorrection.scoreBefore,
+            scoreAfter:  retryCorrection.scoreAfter,
+            improved:    retryCorrection.improved,
+            isRetry:     true,
+          };
+
+          currentAtsScore = retryCorrection.scoreAfter;
+        } else {
+          currentAtsScore = correction.scoreAfter;
+        }
+      }
+
+      // Update cached ATS score after analyze_ats runs
+      if (toolName === "analyze_ats") {
+        try {
+          const parsed = JSON.parse(toolResult);
+          if (parsed.score) currentAtsScore = parsed.score;
+        } catch {}
+      }
+
+      // Yield tool result to UI
       yield { type: "tool_result", tool: toolName, result: toolResult };
 
+      // Add result to message history (truncated to save tokens)
       messages.push({
-  role: "tool",
-  tool_call_id: toolCall.id,
-  content: toolResult.slice(0, 800), // was unlimited before
-});
+        role:        "tool",
+        tool_call_id: toolCall.id,
+        content:     toolResult.slice(0, 600),
+      });
     }
   }
 
-  if (iterations >= MAX_ITERATIONS) {
-    yield { type: "final", content: "I've completed my analysis. Check the results above." };
-  }
+  // Yield tools used and score info for memory saving
+  yield {
+    type: "metadata",
+    toolsUsed:    toolsUsedThisRun,
+    atsScoreBefore: cachedATS?.score || null,
+    atsScoreAfter:  currentAtsScore,
+    finalContent,
+  };
 };
 
 module.exports = { runAgent };
