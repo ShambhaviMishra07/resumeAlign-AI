@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Zap, LogOut, Bot } from "lucide-react";
+import { Zap, LogOut, Lock } from "lucide-react";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -11,10 +11,18 @@ export default function Navbar() {
   const logout = () => { localStorage.clear(); navigate("/"); };
 
   const navLinks = [
-    { label: "Analyze",      path: "/analyzer" },
-    { label: "AI Agent",     path: "/agent"    },
-    { label: "Build Resume", path: "/builder"  },
+    { label: "Analyze",      path: "/analyzer", protected: false },
+    { label: "AI Agent",     path: "/agent",    protected: true  },
+    { label: "Build Resume", path: "/builder",  protected: true  },
   ];
+
+  const handleNav = (link) => {
+    if (link.protected && !token) {
+      navigate("/login?redirect=protected");
+    } else {
+      navigate(link.path);
+    }
+  };
 
   return (
     <motion.nav
@@ -22,8 +30,10 @@ export default function Navbar() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
       style={{
-        position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)",
-        zIndex: 100, width: "calc(100% - 48px)", maxWidth: 1100,
+        position: "fixed", top: 16, left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 100,
+        width: "calc(100% - 48px)", maxWidth: 1100,
       }}
     >
       <div className="glass" style={{
@@ -44,7 +54,7 @@ export default function Navbar() {
             <Zap size={15} color="#fff" />
           </div>
           <span style={{ fontFamily: "Sora", fontWeight: 700, fontSize: 15, color: "#F0F4FF" }}>
-            resumeAlign AI
+            ResumeAlign AI
           </span>
         </div>
 
@@ -52,7 +62,7 @@ export default function Navbar() {
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {navLinks.map((link) => (
             <button key={link.path}
-              onClick={() => navigate(link.path)}
+              onClick={() => handleNav(link)}
               style={{
                 background: location.pathname === link.path
                   ? "rgba(91,110,245,0.12)" : "transparent",
@@ -63,15 +73,25 @@ export default function Navbar() {
                 fontSize: 13, fontWeight: 500,
                 cursor: "pointer", transition: "all 0.2s",
                 fontFamily: "Inter",
+                display: "flex", alignItems: "center", gap: 5,
               }}
               onMouseEnter={(e) => {
-                if (location.pathname !== link.path) e.target.style.color = "#F0F4FF";
+                if (location.pathname !== link.path) {
+                  e.currentTarget.style.color = "#F0F4FF";
+                  e.currentTarget.style.background = "rgba(91,110,245,0.06)";
+                }
               }}
               onMouseLeave={(e) => {
-                if (location.pathname !== link.path) e.target.style.color = "#6B7A99";
+                if (location.pathname !== link.path) {
+                  e.currentTarget.style.color = "#6B7A99";
+                  e.currentTarget.style.background = "transparent";
+                }
               }}
             >
               {link.label}
+              {link.protected && !token && (
+                <Lock size={10} style={{ opacity: 0.5 }} />
+              )}
             </button>
           ))}
         </div>
@@ -81,8 +101,7 @@ export default function Navbar() {
           {token ? (
             <>
               <span style={{ fontSize: 13, color: "#6B7A99" }}>{userName}</span>
-              <button className="btn-ghost"
-                onClick={logout}
+              <button className="btn-ghost" onClick={logout}
                 style={{ padding: "7px 12px", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
                 <LogOut size={13} /> Sign out
               </button>

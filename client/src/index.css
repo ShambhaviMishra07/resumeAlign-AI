@@ -235,3 +235,54 @@ textarea.input { resize: none; }
   text-transform: uppercase;
   color: #3D4F6E;
 }
+
+/* ── Smooth scroll ── */
+html { scroll-behavior: smooth; }
+
+/* ── Smooth transitions on all interactive elements ── */
+button, a, input, textarea {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Remove tap highlight on mobile ── */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ── Better text rendering ── */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Animate spin utility ── */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Page entry animation ── */
+.page-enter {
+  animation: pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Focus ring ── */
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(91, 110, 245, 0.6);
+  outline-offset: 2px;
+}
+
+/* ── Smooth card hover ── */
+.gradient-border {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gradient-border:hover {
+  box-shadow: 0 12px 40px rgba(91, 110, 245, 0.12);
+}

@@ -15,21 +15,38 @@ export default function Login() {
 
   const change = (e) => { setForm({ ...form, [e.target.name]: e.target.value }); setError(""); };
 
-  const submit = async () => {
-    setLoading(true); setError("");
-    try {
-      const url  = tab === "login" ? "/auth/login" : "/auth/register";
-      const body = tab === "login" ? { email: form.email, password: form.password } : form;
-      const { data } = await axios.post(url, body);
-      localStorage.setItem("token",    data.token);
-      localStorage.setItem("userId",   data.user.id);
-      localStorage.setItem("userName", data.user.name);
-      const redirect = params.get("redirect");
-      navigate(redirect === "builder" ? "/builder" : "/analyzer");
-    } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
-    } finally { setLoading(false); }
-  };
+ const submit = async () => {
+  setLoading(true);
+  setError("");
+
+  try {
+    const url = tab === "login" ? "/auth/login" : "/auth/register";
+    const body = tab === "login"
+      ? { email: form.email, password: form.password }
+      : form;
+
+    const { data } = await axios.post(url, body);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("userId", data.user.id);
+    localStorage.setItem("userName", data.user.name);
+
+    const redirect = params.get("redirect");
+
+    if (redirect === "protected") {
+      navigate("/agent"); // default protected destination
+    } else if (redirect === "builder") {
+      navigate("/builder");
+    } else {
+      navigate("/analyzer");
+    }
+
+  } catch (err) {
+    setError(err.response?.data?.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{
