@@ -307,37 +307,113 @@ export default function Analyzer() {
                 </button>
               </div>
 
-              {/* Score card */}
-              <motion.div
-                className="card"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                style={{ padding: "28px 24px", display: "grid", gridTemplateColumns: "auto 1fr", gap: 32, alignItems: "center" }}
-              >
-                <ScoreRing score={atsResult.score} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  {[
-                    { label: "Sections found",   value: atsResult.sectionsFound?.length ?? 0,    color: "#A78BFA" },
-                    { label: "Sections missing", value: atsResult.missingSections?.length ?? 0,  color: "#EF4444" },
-                    { label: "Keywords matched", value: atsResult.keywordsFound?.length ?? 0,    color: "#10B981" },
-                    { label: "Action verbs",     value: atsResult.actionVerbsFound?.length ?? 0, color: "#F59E0B" },
-                  ].map((s, i) => (
-                    <motion.div
-                      key={i} className="card-2"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + i * 0.06 }}
-                      style={{ padding: "14px 16px" }}
-                    >
-                      <div style={{ fontFamily: "Sora", fontWeight: 700, fontSize: 26, color: s.color }}>
-                        {s.value}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{s.label}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
+             {/* Score overview */}
+<motion.div
+  className="card"
+  initial={{ opacity: 0, y: 16 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.1 }}
+  style={{
+    padding: "32px 28px",
+    display: "grid",
+    gridTemplateColumns: "auto 1fr",
+    gap: 36,
+    alignItems: "center",
+    background: "rgba(15, 22, 40, 0.9)",
+    border: "1px solid rgba(91,110,245,0.2)",
+    boxShadow: "0 0 60px rgba(91,110,245,0.06)",
+  }}
+>
+  {/* <ScoreRing score={atsResult.score} /> */}
+
+<div
+  style={{
+    color: "#FFFFFF",
+    textShadow:
+      "0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.7), 0 0 35px rgba(255,255,255,0.5)",
+  }}
+>
+  <ScoreRing score={atsResult.score} />
+</div>
+
+  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+    {[
+      {
+        label: "Sections found",
+        value: atsResult.sectionsFound?.length ?? 0,
+        color: "#818CF8",
+        glow: "rgba(129,140,248,0.35)",
+      },
+      {
+        label: "Sections missing",
+        value: atsResult.missingSections?.length ?? 0,
+        color: "#F87171",
+        glow: "rgba(248,113,113,0.35)",
+      },
+      {
+        label: "Keywords matched",
+        value: atsResult.keywordsFound?.length ?? 0,
+        color: "#34D399",
+        glow: "rgba(52,211,153,0.35)",
+      },
+      {
+        label: "Action verbs",
+        value: atsResult.actionVerbsFound?.length ?? 0,
+        color: "#FCD34D",
+        glow: "rgba(252,211,77,0.35)",
+      },
+    ].map((stat, i) => (
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 + i * 0.07 }}
+        style={{
+          padding: "18px 20px",
+          background: "rgba(20, 27, 45, 0.8)",
+          border: `1px solid ${stat.color}25`,
+          borderRadius: 14,
+          boxShadow: `0 0 24px ${stat.glow}20, inset 0 0 20px ${stat.glow}08`,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Glow background blob */}
+        <div style={{
+          position: "absolute",
+          top: -20, right: -20,
+          width: 80, height: 80,
+          borderRadius: "50%",
+          background: stat.color,
+          filter: "blur(40px)",
+          opacity: 0.15,
+          pointerEvents: "none",
+        }} />
+
+        <div style={{
+          fontFamily: "Sora",
+          fontWeight: 800,
+          fontSize: 42,
+          color: stat.color,
+          lineHeight: 1,
+          marginBottom: 6,
+          textShadow: `0 0 20px ${stat.color}, 0 0 40px ${stat.glow}`,
+          letterSpacing: "-0.02em",
+        }}>
+          {stat.value}
+        </div>
+        <div style={{
+          fontSize: 12,
+          color: "#6B7A99",
+          fontWeight: 500,
+          letterSpacing: "0.01em",
+        }}>
+          {stat.label}
+        </div>
+      </motion.div>
+    ))}
+  </div>
+</motion.div>
 
               {/* ATS breakdown */}
               <Panel title="ATS Breakdown" icon={Zap} defaultOpen>

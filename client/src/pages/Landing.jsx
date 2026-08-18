@@ -635,9 +635,9 @@ export default function Landing() {
         <span style={{ fontSize: 13, color: "#3D4F6E" }}>
           React · Node.js · Express · MongoDB · Groq LLaMA 3
         </span>
-        <span style={{ fontSize: 13, color: "#3D4F6E" }}>
+        {/* <span style={{ fontSize: 13, color: "#3D4F6E" }}>
           Built by Shambhavi Mishra
-        </span>
+        </span> */}
       </footer>
     </div>
   );
