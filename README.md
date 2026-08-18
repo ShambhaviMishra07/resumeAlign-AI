@@ -17,19 +17,19 @@ No account is needed to analyze a resume. Sign in only to build and save your re
 ### 🏠 Landing Page
 
 <p align="center">
-  <img src="./images/landing_page.png" alt="ResumeAlign AI Landing Page" width="900"/>
+  <img src="./images/landing_page.png" alt="ResumeAlign AI Landing Page" width="500"/>
 </p>
 
 ### 📊 Resume Analysis
 
 <p align="center">
-  <img src="./images/analyze.png" alt="Resume Analysis Dashboard" width="900"/>
+  <img src="./images/analyze.png" alt="Resume Analysis Dashboard" width="300"/>
 </p>
 
 ### 📝 Resume Builder
 
 <p align="center">
-  <img src="./images/resume_builder.png" alt="Resume Builder" width="900"/>
+  <img src="./images/resume_builder.png" alt="Resume Builder" width="300"/>
 </p>
 
 ## Features
