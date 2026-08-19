@@ -32,6 +32,92 @@ No account is needed to analyze a resume. Sign in only to build and save your re
   <img src="./images/resume_builder.png" alt="Resume Builder" width="300"/>
 </p>
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    A([User uploads resume]) --> B[Parse resume text\npdf-parse · mammoth]
+    B --> C{Choose a feature}
+
+    C --> D[ATS Analyzer\nNo login required]
+    C --> E[AI Agent\nSign in required]
+    C --> F[Resume Builder\nSign in required]
+
+    D --> D1[Score out of 100\nSections · Keywords · Verbs]
+    D1 --> D2[Job description match\nHigh / Medium / Low gaps]
+    D2 --> D3[Groq AI feedback\nStrengths · Suggestions · Rewrites]
+
+    E --> E1[Load session memory\nMongoDB · last 6 turns]
+    E1 --> E2[LLaMA 3 plans tools\nAutonomous tool selection]
+    E2 --> E3[Execute tools\nanalyze_ats · match_jd · rewrite_bullets]
+    E3 --> E4{Self-correction\nRe-score after rewrite}
+    E4 -->|Score +5 pts ✓| E5[Save turn to memory\nMongoDB · 7-day TTL]
+    E4 -->|Score unchanged\nRetry max 2×| E3
+    E5 --> E6[Stream response to UI\nServer-Sent Events]
+
+    F --> F1[Fill sections\nProjects · Skills · Education]
+    F1 --> F2[Live preview\nUpdates as you type]
+    F2 --> F3[Export PDF\nPuppeteer · headless Chrome]
+
+    style A fill:#5B6EF5,color:#fff,stroke:#5B6EF5
+    style B fill:#374151,color:#fff,stroke:#374151
+    style C fill:#374151,color:#fff,stroke:#374151
+    style D fill:#0F6E56,color:#fff,stroke:#0F6E56
+    style D1 fill:#0F6E56,color:#fff,stroke:#0F6E56
+    style D2 fill:#0F6E56,color:#fff,stroke:#0F6E56
+    style D3 fill:#0F6E56,color:#fff,stroke:#0F6E56
+    style E fill:#534AB7,color:#fff,stroke:#534AB7
+    style E1 fill:#374151,color:#fff,stroke:#374151
+    style E2 fill:#534AB7,color:#fff,stroke:#534AB7
+    style E3 fill:#534AB7,color:#fff,stroke:#534AB7
+    style E4 fill:#993556,color:#fff,stroke:#993556
+    style E5 fill:#374151,color:#fff,stroke:#374151
+    style E6 fill:#374151,color:#fff,stroke:#374151
+    style F fill:#854F0B,color:#fff,stroke:#854F0B
+    style F1 fill:#854F0B,color:#fff,stroke:#854F0B
+    style F2 fill:#854F0B,color:#fff,stroke:#854F0B
+    style F3 fill:#854F0B,color:#fff,stroke:#854F0B
+```
+
+## AI Agent — Agentic Loop
+
+```mermaid
+flowchart TD
+    A([User sends message]) --> B[Load last 6 turns\nfrom MongoDB]
+    B --> C[LLaMA 3 reads intent\n+ memory context]
+    C --> D{Which tools\nare needed?}
+
+    D --> T1[analyze_ats\nScore out of 100]
+    D --> T2[match_job_description\nKeyword gap analysis]
+    D --> T3[rewrite_resume_bullets\nStronger action verbs]
+    D --> T4[suggest_missing_skills\nBased on target role]
+
+    T1 --> SC[Self-correction check\nRe-run ATS scorer]
+    T2 --> SC
+    T3 --> SC
+    T4 --> SC
+
+    SC -->|Improved by 5+ pts| SAVE[Save turn to MongoDB\n7-day TTL auto-expiry]
+    SC -->|Not improved\nmax 2 retries| T3
+
+    SAVE --> STREAM[Stream final response\nvia SSE to frontend]
+    STREAM --> END([UI updates in real time\nTool pills · Score delta])
+
+    style A fill:#5B6EF5,color:#fff,stroke:#5B6EF5
+    style B fill:#374151,color:#fff,stroke:#374151
+    style C fill:#534AB7,color:#fff,stroke:#534AB7
+    style D fill:#374151,color:#fff,stroke:#374151
+    style T1 fill:#534AB7,color:#fff,stroke:#534AB7
+    style T2 fill:#185FA5,color:#fff,stroke:#185FA5
+    style T3 fill:#0F6E56,color:#fff,stroke:#0F6E56
+    style T4 fill:#854F0B,color:#fff,stroke:#854F0B
+    style SC fill:#993556,color:#fff,stroke:#993556
+    style SAVE fill:#374151,color:#fff,stroke:#374151
+    style STREAM fill:#374151,color:#fff,stroke:#374151
+    style END fill:#5B6EF5,color:#fff,stroke:#5B6EF5
+```
+
+
 ## Features
 
 ### 🎯 ATS Scoring
