@@ -1,25 +1,50 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Analyzer from "./pages/Analyzer";
-import ResumeBuilder from "./pages/ResumeBuilder";
-import Agent from "./pages/Agent";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute   from './components/ProtectedRoute';
+import AppLayout        from './layouts/AppLayout';
+import LandingPage      from './pages/LandingPage';
+import Login            from './pages/Login';
+import Register         from './pages/Register';
+import Dashboard        from './pages/Dashboard';
+import Transactions     from './pages/Transactions';
+import Budget           from './pages/Budget';
+import Analytics        from './pages/Analytics';
+import Settings         from './pages/Settings';
 
-const Protected = ({ children }) => {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login?redirect=protected" />;
-};
-
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/"         element={<Landing />} />
-        <Route path="/login"    element={<Login />} />
-        <Route path="/analyzer" element={<Analyzer />} />
-        <Route path="/agent"    element={<protected><Agent /></protected>} />
-        <Route path="/builder"  element={<Protected><ResumeBuilder /></Protected>} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Root → landing page */}
+          <Route path="/"         element={<Navigate to="/home" replace />} />
+
+          {/* Public routes */}
+          <Route path="/home"     element={<LandingPage />} />
+          <Route path="/login"    element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Protected routes — all inside AppLayout */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard"    element={<Dashboard />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/budget"       element={<Budget />} />
+            <Route path="/analytics"    element={<Analytics />} />
+            <Route path="/settings"     element={<Settings />} />
+          </Route>
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
+
+export default App;
