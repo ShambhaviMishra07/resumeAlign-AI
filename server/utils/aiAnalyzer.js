@@ -7,7 +7,7 @@ const groq = new Groq({
 const getAIFeedback = async (resumeText, atsResult) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL,
       messages: [
         {
           role: "system",

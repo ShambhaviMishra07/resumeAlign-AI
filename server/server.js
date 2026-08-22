@@ -1,6 +1,11 @@
 const dotenv = require("dotenv");
 dotenv.config();
 
+if (!process.env.GROQ_MODEL) {
+  console.warn("⚠️  GROQ_MODEL not set in .env — agent will fail");
+}
+console.log(`Using Groq model: ${process.env.GROQ_MODEL}`);
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");

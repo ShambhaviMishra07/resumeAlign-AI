@@ -116,7 +116,7 @@ const executeTool = async (toolName, args) => {
 
   if (toolName === "suggest_missing_skills") {
     const completion = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL ,
       messages: [
         {
           role: "system",
@@ -243,7 +243,7 @@ const runAgent = async function* (
     iterations++;
 
     const response = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL ,
       messages,
       tools: TOOLS,
       tool_choice: "auto",
