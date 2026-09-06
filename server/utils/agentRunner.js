@@ -1,6 +1,8 @@
 const Groq    = require("groq-sdk");
 const scoreATS = require("./atsScorer");
 const matchJD  = require("./jdMatcher");
+const { getGroqModel } = require("./getGroqModel");
+
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -95,8 +97,10 @@ const executeTool = async (toolName, args) => {
       ? `\nPrevious attempt feedback: ${args.feedback}. Try a different approach.`
       : "";
 
+      const model = await getGroqModel();
+
     const completion = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      model,
       messages: [
         {
           role: "system",
@@ -115,8 +119,10 @@ const executeTool = async (toolName, args) => {
   }
 
   if (toolName === "suggest_missing_skills") {
+   const model = await getGroqModel();
+
     const completion = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL ,
+      model,
       messages: [
         {
           role: "system",
@@ -242,9 +248,11 @@ const runAgent = async function* (
   while (iterations < MAX_ITER) {
     iterations++;
 
-    const response = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL ,
-      messages,
+   const model = await getGroqModel();
+
+  const response = await groq.chat.completions.create({
+    model,
+    messages,
       tools: TOOLS,
       tool_choice: "auto",
       max_tokens: 800,

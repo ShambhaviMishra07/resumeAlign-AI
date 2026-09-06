@@ -1,4 +1,5 @@
 const Groq = require("groq-sdk");
+const { getGroqModel, resetModelCache } = require("./getGroqModel");
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -6,17 +7,20 @@ const groq = new Groq({
 
 const getAIFeedback = async (resumeText, atsResult) => {
   try {
+    const model = await getGroqModel();
+
     const completion = await groq.chat.completions.create({
-      model: process.env.GROQ_MODEL,
+      model,
       messages: [
         {
           role: "system",
           content:
-            "You are an expert resume coach, ATS reviewer, and technical recruiter. Return only valid JSON. Use only facts explicitly present in the resume and ATS analysis. Never invent metrics, percentages, achievements, users, revenue, accuracy values, or results."
-        }, {
+            "You are an expert resume coach, ATS reviewer, and technical recruiter. Return only valid JSON. Use only facts explicitly present in the resume and ATS analysis. Never invent metrics, percentages, achievements, users, revenue, accuracy values, or results.",
+        },
+        {
           role: "user",
           content: `
-      Analyze this resume as an ATS reviewer and technical recruiter.
+Analyze this resume as an ATS reviewer and technical recruiter.
 
 Focus on:
 - ATS compatibility
@@ -64,8 +68,6 @@ IMPORTANT RULES:
 
 10. Return exactly 2 objects in the improvedBullets array.
 
-
-
 Respond with this exact JSON format:
 
 {
@@ -83,14 +85,14 @@ Respond with this exact JSON format:
     "specific actionable suggestion 5"
   ],
   "improvedBullets": [
-  {
-  "original": "Developed a Flask-powered web interface with real-time form-based prediction, replacing terminal-based output with a responsive dark-themed UI for seamless teacher-student interaction.",
-  "improved": "Developed a Flask-powered web interface with real-time form-based prediction and a responsive dark-themed UI, replacing terminal-based workflows and improving usability for teacher-student interaction."
-},
     {
-  "original": "Implemented Redis caching (LPUSH/LTRIM, 24-hour TTL) for message, reducing MongoDB reads by ~80%.",
-  "improved": "Implemented Redis caching using LPUSH/LTRIM with a 24-hour TTL, reducing MongoDB reads by approximately 80% and improving message retrieval efficiency."
-}
+      "original": "Developed a Flask-powered web interface with real-time form-based prediction, replacing terminal-based output with a responsive dark-themed UI for seamless teacher-student interaction.",
+      "improved": "Developed a Flask-powered web interface with real-time form-based prediction and a responsive dark-themed UI, replacing terminal-based workflows and improving usability for teacher-student interaction."
+    },
+    {
+      "original": "Implemented Redis caching (LPUSH/LTRIM, 24-hour TTL) for message, reducing MongoDB reads by ~80%.",
+      "improved": "Implemented Redis caching using LPUSH/LTRIM with a 24-hour TTL, reducing MongoDB reads by approximately 80% and improving message retrieval efficiency."
+    }
   ]
 }
 `,
@@ -104,14 +106,27 @@ Respond with this exact JSON format:
 
     const feedback = JSON.parse(text);
 
-feedback.improvedBullets = Array.isArray(feedback.improvedBullets)
-  ? feedback.improvedBullets.slice(0, 2)
-  : [];
+    feedback.improvedBullets = Array.isArray(feedback.improvedBullets)
+      ? feedback.improvedBullets.slice(0, 2)
+      : [];
 
-return feedback;
-    
+    return feedback;
   } catch (error) {
     console.error("Groq Error:", error);
+
+    // If the selected model is no longer available,
+    // clear the cache so the next request fetches a fresh model.
+    if (
+      error.message?.includes("model_not_found") ||
+      error.message?.includes("does not exist")
+    ) {
+      resetModelCache();
+
+      console.log(
+        "🔄 Model error detected — cache cleared for next request"
+      );
+    }
+
     throw new Error(`Failed to generate AI feedback: ${error.message}`);
   }
 };
