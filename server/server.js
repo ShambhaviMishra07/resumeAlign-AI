@@ -16,8 +16,8 @@ initGroqModel();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://your-app-name.vercel.app", // update this after deploying frontend
-  process.env.FRONTEND_URL,           // set this in Render env vars
+  "https://resume-align-ai.vercel.app",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(cors({
