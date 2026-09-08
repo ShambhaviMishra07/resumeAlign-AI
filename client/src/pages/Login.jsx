@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
+import BASE_URL from "../api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,12 +16,15 @@ export default function Login() {
 
   const change = (e) => { setForm({ ...form, [e.target.name]: e.target.value }); setError(""); };
 
- const submit = async () => {
+  const submit = async () => {
   setLoading(true);
   setError("");
 
   try {
-    const url = tab === "login" ? "/auth/login" : "/auth/register";
+    const url = tab === "login"
+      ? `${BASE_URL}/auth/login`
+      : `${BASE_URL}/auth/register`;
+
     const body = tab === "login"
       ? { email: form.email, password: form.password }
       : form;
@@ -34,7 +38,7 @@ export default function Login() {
     const redirect = params.get("redirect");
 
     if (redirect === "protected") {
-      navigate("/agent"); // default protected destination
+      navigate("/agent");
     } else if (redirect === "builder") {
       navigate("/builder");
     } else {
@@ -47,7 +51,6 @@ export default function Login() {
     setLoading(false);
   }
 };
-
   return (
     <div style={{
       minHeight: "100vh", background: "#080C18",

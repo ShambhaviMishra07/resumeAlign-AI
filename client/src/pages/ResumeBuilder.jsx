@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import BASE_URL from "../api";
+
 
 const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -60,7 +62,7 @@ export default function ResumeBuilder() {
   const [languages,  setLanguages]  = useState([""]);
 
   useEffect(() => {
-    axios.get("/resume", { headers: authHeader() })
+    axios.get(`${BASE_URL}/resume`, { headers: authHeader() })
       .then(({ data }) => {
         const r = data.resume;
         if (r.personalInfo) setPersonalInfo({ ...personalInfo, ...r.personalInfo });
@@ -78,7 +80,7 @@ export default function ResumeBuilder() {
   const save = async () => {
     setSaving(true); setError("");
     try {
-      await axios.put("/resume", {
+      await axios.put(`${BASE_URL}/resume`, {
         personalInfo,
         education,
         projects: projects.map((p) => ({
@@ -118,7 +120,7 @@ export default function ResumeBuilder() {
         courses:    courses.filter(Boolean),
         languages:  languages.filter(Boolean),
       };
-      const res = await axios.post("/resume/download-pdf", body, {
+      const res = await axios.post(`${BASE_URL}/resume/download-pdf`, body, {
         headers: authHeader(),
         responseType: "blob",
       });

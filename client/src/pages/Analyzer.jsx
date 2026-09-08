@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import BASE_URL from "../api";
 
 const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 
@@ -145,7 +146,7 @@ export default function Analyzer() {
     fd.append("resume", file);
     try {
       setLoadMsg("Calculating ATS score…");
-      const { data } = await axios.post("/analyze/ats", fd, {
+      const { data } = await axios.post(`${BASE_URL}/analyze/ats`, fd, {
         headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
       });
       setResumeText(data.resumeText);
@@ -161,7 +162,7 @@ export default function Analyzer() {
     setLoading(true); setLoadMsg("Matching keywords…");
     try {
       const { data } = await axios.post(
-        "/analyze/match",
+       `${BASE_URL}/analyze/match`,
         { resumeText, jobDescription: jobDesc },
         { headers: { ...authHeader(), "Content-Type": "application/json" } }
       );
@@ -175,7 +176,7 @@ export default function Analyzer() {
     setLoading(true); setLoadMsg("Groq AI is reading your resume…");
     try {
       const { data } = await axios.post(
-        "/analyze/ai-feedback",
+      `${BASE_URL}/analyze/ai-feedback`,
         { resumeText, atsResult },
         { headers: { ...authHeader(), "Content-Type": "application/json" } }
       );

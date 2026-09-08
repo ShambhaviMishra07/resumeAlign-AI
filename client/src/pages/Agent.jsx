@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import BASE_URL from "../api";
 
 // ── Tool display metadata ──
 const TOOL_META = {
@@ -75,7 +76,7 @@ export default function Agent() {
   const loadSessionMemory = async (sid) => {
     setLoadingMemory(true);
     try {
-      const { data } = await axios.get(`/agent/memory/${sid}`);
+      const { data } = await axios.get(`${BASE_URL}/agent/memory/${sid}`);
       if (data.turns?.length > 0) {
         // Reconstruct messages from memory
         const restored = data.turns.map((turn, i) => ({
@@ -106,7 +107,7 @@ export default function Agent() {
     try {
       const fd = new FormData();
       fd.append("resume", accepted[0]);
-      const { data } = await axios.post("/agent/upload-context", fd, {
+      const { data } = await axios.post(`${BASE_URL}/agent/upload-context`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResumeText(data.resumeText);
@@ -149,7 +150,7 @@ export default function Agent() {
     }]);
 
     try {
-      const response = await fetch("/agent/chat", {
+      const response = await fetch(`${BASE_URL}/agent/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -285,7 +286,7 @@ export default function Agent() {
 
   const clearSession = async () => {
     try {
-      await axios.delete(`/agent/memory/${sessionId}`);
+     await axios.delete(`${BASE_URL}/agent/memory/${sessionId}`);
     } catch {}
     newSession();
   };
