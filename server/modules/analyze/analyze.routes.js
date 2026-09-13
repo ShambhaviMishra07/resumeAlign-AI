@@ -7,15 +7,28 @@ const { analyzeATS, matchJob, aiFeedback } = require("./analyze.controller");
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+ fileFilter: (req, file, cb) => {
+    console.log("File:", file.originalname);
+    console.log("MIME:", file.mimetype);
+
+    const allowedMimeTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream"
     ];
-    allowed.includes(file.mimetype)
-      ? cb(null, true)
-      : cb(new Error("Only PDF and DOCX files are allowed"));
-  },
+
+    const allowedExtensions = [".pdf", ".docx"];
+    const extension = require("path").extname(file.originalname).toLowerCase();
+
+    if (
+        allowedMimeTypes.includes(file.mimetype) &&
+        allowedExtensions.includes(extension)
+    ) {
+        cb(null, true);
+    } else {
+        cb(new Error("Only PDF and DOCX files are allowed"));
+    }
+},
 });
 
 router.post("/ats", upload.single("resume"), analyzeATS);

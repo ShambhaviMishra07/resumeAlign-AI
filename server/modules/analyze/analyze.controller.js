@@ -5,7 +5,10 @@ const { getAIFeedback } = require("../../utils/aiAnalyzer");
 
 
 // POST /analyze/ats
+// POST /analyze/ats
 const analyzeATS = async (req, res) => {
+  const start = Date.now();
+
   try {
     if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
@@ -19,10 +22,14 @@ const analyzeATS = async (req, res) => {
     // Step 2 - Score it
     const atsResult = scoreATS(resumeText);
 
+    const duration = Date.now() - start;
+    console.log(`ATS analysis completed in ${duration}ms`);
+
     res.json({
       message: "ATS analysis complete",
       resumeText,
       atsResult,
+      processingTimeMs: duration,
     });
   } catch (err) {
     res.status(500).json({ message: "Analysis failed", error: err.message });
@@ -78,5 +85,7 @@ const aiFeedback = async (req, res) => {
     res.status(500).json({ message: "AI feedback failed", error: err.message });
   }
 };
+
+
 
 module.exports = { analyzeATS, matchJob, aiFeedback };
